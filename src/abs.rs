@@ -1,5 +1,5 @@
 use std::{
-    borrow::Borrow,
+    borrow::{Borrow, Cow},
     io,
     ops::Deref,
     path::{Path, PathBuf},
@@ -7,18 +7,27 @@ use std::{
 
 use ref_cast::RefCast;
 
+pub fn absolutize<'a, P: AsRef<Path> + 'a>(p: P) -> io::Result<Cow<'a, AbsPath>> {
+    Ok(if p.as_ref().is_absolute() {
+        // SAFETY: the lifetime is captured.
+        unsafe { Cow::Borrowed(&*(p.as_ref() as *const Path as *const AbsPath)) }
+    } else {
+        Cow::Owned(AbsPathBuf::new(p)?)
+    })
+}
+
 /// Equivalent to [PathBuf], but guaranteed to be absolute.
 #[derive(Debug, PartialEq, Eq, Clone)]
 #[repr(transparent)]
 pub struct AbsPathBuf(PathBuf);
 
 /// Equivalent to [Path], but guaranteed to be absolute.
-#[derive(Debug, RefCast)]
+#[derive(Debug, RefCast, PartialEq, Eq)]
 #[repr(transparent)]
 pub struct AbsPath(Path);
 
 impl AbsPathBuf {
-    pub fn absolutize<P: AsRef<Path>>(p: P) -> io::Result<Self> {
+    pub fn new<P: AsRef<Path>>(p: P) -> io::Result<Self> {
         p.as_ref().to_abs_path_buf()
     }
 }

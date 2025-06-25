@@ -2,7 +2,7 @@
 //!
 //! ### Absolute paths are just paths
 //! ```
-//! # fn example() -> AbsPathBuf { AbsPathBuf::absolutize(".").unwrap() }
+//! # fn example() -> AbsPathBuf { AbsPathBuf::new(".").unwrap() }
 //!
 //! use dirge::{AbsPath, AbsPathBuf};
 //! use std::path::Path;
@@ -33,9 +33,8 @@
 //! - Enhance correctness through specific types.
 //! - Be conducive to re-exporting.
 //! - Be portable.
-#![deny(unsafe_code)]
 
 mod abs;
 mod rel;
 
-pub use abs::{AbsPath, AbsPathBuf, ToAbsPathBuf};
+pub use abs::{AbsPath, AbsPathBuf, ToAbsPathBuf, absolutize};

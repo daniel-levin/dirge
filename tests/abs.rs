@@ -1,4 +1,4 @@
-use dirge::{AbsPath, AbsPathBuf, ToAbsPathBuf};
+use dirge::{AbsPath, AbsPathBuf, ToAbsPathBuf, absolutize};
 use std::{
     ffi::OsStr,
     io,
@@ -8,7 +8,7 @@ use std::{
 #[test]
 #[cfg(target_family = "unix")]
 fn no_overhead() -> io::Result<()> {
-    let dn1 = AbsPathBuf::absolutize("/dev/null");
+    let dn1 = AbsPathBuf::new("/dev/null");
 
     let pb: PathBuf = unsafe { std::mem::transmute(dn1) };
 
@@ -24,7 +24,7 @@ fn no_overhead() -> io::Result<()> {
 #[test]
 fn basic() -> io::Result<()> {
     let c1 = "Cargo.toml".to_abs_path_buf()?;
-    let c2 = AbsPathBuf::absolutize("Cargo.toml")?;
+    let c2 = AbsPathBuf::new("Cargo.toml")?;
 
     assert_eq!(c1, c2);
 
@@ -43,4 +43,13 @@ fn deref_methods() {
     let c1 = "Cargo.toml".to_abs_path_buf().unwrap();
 
     assert!(c1.capacity() > 0);
+}
+
+#[test]
+fn cow() {
+    let c1 = "Cargo.toml".to_abs_path_buf().unwrap();
+
+    let c2 = absolutize("Cargo.toml").unwrap();
+
+    assert_eq!(*c1, *c2);
 }
