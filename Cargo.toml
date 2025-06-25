@@ -1,10 +1,11 @@
 [package]
 name = "dirge"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
-description = "Extensions to the standard library's path functionality"
+description = "Convenient extensions to the standard library's path types"
 repository = "https://github.com/daniel-levin/dirge"
 license = "Unlicense/MIT"
 authors = ["Daniel Levin"]
 
 [dependencies]
+ref-cast = "1.0.24"
