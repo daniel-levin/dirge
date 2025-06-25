@@ -36,5 +36,6 @@
 #![deny(unsafe_code)]
 
 mod abs;
+mod rel;
 
-pub use abs::*;
+pub use abs::{AbsPath, AbsPathBuf, ToAbsPathBuf};

@@ -77,7 +77,7 @@ impl ToOwned for AbsPath {
 
 impl AbsPathBuf {
     pub fn as_path(&self) -> &Path {
-        &self
+        self
     }
 
     pub fn capacity(&self) -> usize {
