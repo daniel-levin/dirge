@@ -37,3 +37,10 @@ fn deref_to_abs_path() {
 
     let _x: &AbsPath = &c1;
 }
+
+#[test]
+fn deref_methods() {
+    let c1 = "Cargo.toml".to_abs_path_buf().unwrap();
+
+    assert!(c1.capacity() > 0);
+}

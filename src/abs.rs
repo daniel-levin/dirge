@@ -1,4 +1,5 @@
 use std::{
+    borrow::Borrow,
     io,
     ops::Deref,
     path::{Path, PathBuf},
@@ -23,6 +24,12 @@ impl AbsPathBuf {
 }
 
 impl AsRef<Path> for AbsPathBuf {
+    fn as_ref(&self) -> &Path {
+        &self.0
+    }
+}
+
+impl AsRef<Path> for AbsPath {
     fn as_ref(&self) -> &Path {
         &self.0
     }
@@ -53,3 +60,29 @@ impl Deref for AbsPathBuf {
         AbsPath::ref_cast(&self.0)
     }
 }
+
+impl Borrow<AbsPath> for AbsPathBuf {
+    fn borrow(&self) -> &AbsPath {
+        self
+    }
+}
+
+impl ToOwned for AbsPath {
+    type Owned = AbsPathBuf;
+
+    fn to_owned(&self) -> Self::Owned {
+        AbsPathBuf(self.0.to_owned())
+    }
+}
+
+impl AbsPathBuf {
+    pub fn as_path(&self) -> &Path {
+        &self
+    }
+
+    pub fn capacity(&self) -> usize {
+        self.0.capacity()
+    }
+}
+
+impl AbsPath {}

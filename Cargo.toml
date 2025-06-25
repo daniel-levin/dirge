@@ -6,6 +6,8 @@ description = "Convenient extensions to the standard library's path types"
 repository = "https://github.com/daniel-levin/dirge"
 license = "Unlicense/MIT"
 authors = ["Daniel Levin"]
+keywords = ["paths", "filesystem"]
+categories = ["os", "filesystem"]
 
 [dependencies]
 ref-cast = "1.0.24"
