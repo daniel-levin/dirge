@@ -1,4 +1,4 @@
-use dirge::{AbsPath, AbsPathBuf, ToAbsPathBuf, absolutize};
+use dirge::{AbsPath, AbsPathBuf, ToAbsPathBuf};
 use std::{
     ffi::OsStr,
     io,
@@ -43,13 +43,4 @@ fn deref_methods() {
     let c1 = "Cargo.toml".to_abs_path_buf().unwrap();
 
     assert!(c1.capacity() > 0);
-}
-
-#[test]
-fn cow() {
-    let c1 = "Cargo.toml".to_abs_path_buf().unwrap();
-
-    let c2 = absolutize("Cargo.toml").unwrap();
-
-    assert_eq!(*c1, *c2);
 }

@@ -10,4 +10,4 @@ keywords = ["paths", "filesystem"]
 categories = ["os", "filesystem"]
 
 [dependencies]
-ref-cast = "1.0.24"
+ref-cast = "1"

@@ -18,7 +18,7 @@
 //! }
 //!
 //! /// But they go anywhere the standard library's paths do!
-//! let x = std::fs::read_to_string(&a);
+//! let _ = std::fs::read_to_string(&a);
 //! ```
 //!
 //!
@@ -35,6 +35,5 @@
 //! - Be portable.
 
 mod abs;
-mod rel;
 
-pub use abs::{AbsPath, AbsPathBuf, ToAbsPathBuf, absolutize};
+pub use abs::{AbsPath, AbsPathBuf, ToAbsPathBuf};

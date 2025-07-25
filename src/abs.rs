@@ -1,30 +1,35 @@
 use std::{
-    borrow::{Borrow, Cow},
+    borrow::Borrow,
     io,
     ops::Deref,
     path::{Path, PathBuf},
 };
 
+use std::fmt;
+
 use ref_cast::RefCast;
 
-pub fn absolutize<'a, P: AsRef<Path> + 'a>(p: P) -> io::Result<Cow<'a, AbsPath>> {
-    Ok(if p.as_ref().is_absolute() {
-        // SAFETY: the lifetime is captured.
-        unsafe { Cow::Borrowed(&*(p.as_ref() as *const Path as *const AbsPath)) }
-    } else {
-        Cow::Owned(AbsPathBuf::new(p)?)
-    })
-}
-
 /// Equivalent to [PathBuf], but guaranteed to be absolute.
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone)]
 #[repr(transparent)]
 pub struct AbsPathBuf(PathBuf);
 
 /// Equivalent to [Path], but guaranteed to be absolute.
-#[derive(Debug, RefCast, PartialEq, Eq)]
+#[derive(RefCast, PartialEq, Eq)]
 #[repr(transparent)]
 pub struct AbsPath(Path);
+
+impl fmt::Debug for AbsPath {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Debug::fmt(&self.0, f)
+    }
+}
+
+impl fmt::Debug for AbsPathBuf {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Debug::fmt(&self.0, f)
+    }
+}
 
 impl AbsPathBuf {
     pub fn new<P: AsRef<Path>>(p: P) -> io::Result<Self> {
@@ -93,5 +98,3 @@ impl AbsPathBuf {
         self.0.capacity()
     }
 }
-
-impl AbsPath {}
