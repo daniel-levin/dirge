@@ -11,6 +11,7 @@ use ref_cast::RefCast;
 
 /// Equivalent to [PathBuf], but guaranteed to be absolute.
 #[derive(PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(transparent)]
 pub struct AbsPathBuf(PathBuf);
 
@@ -96,5 +97,30 @@ impl AbsPathBuf {
 
     pub fn capacity(&self) -> usize {
         self.0.capacity()
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for AbsPath {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.0.serialize(serializer)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for &'de AbsPath {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let path = <&Path>::deserialize(deserializer)?;
+        if path.is_absolute() {
+            Ok(AbsPath::ref_cast(path))
+        } else {
+            Err(serde::de::Error::custom("path must be absolute"))
+        }
     }
 }

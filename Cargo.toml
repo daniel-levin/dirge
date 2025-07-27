@@ -9,5 +9,10 @@ authors = ["Daniel Levin"]
 keywords = ["paths", "filesystem"]
 categories = ["os", "filesystem"]
 
+[features]
+default = []
+serde = ["dep:serde"]
+
 [dependencies]
 ref-cast = "1"
+serde = { version = "1", optional = true, features = ["derive"] }
