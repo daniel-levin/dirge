@@ -18,9 +18,42 @@ fn needs_abs_path(p: &AbsPath) {
 }
 
 /// But they go anywhere the standard library's paths do!
-let x = std::fs::read_to_string(&a);
+let _ = std::fs::read_to_string(&a);
 ```
 
+#### Relative paths provide similar guarantees
+```rust
+use dirge::{RelPath, RelPathBuf};
+use std::path::Path;
+
+let rel = RelPathBuf::new("src/main.rs").unwrap();
+let rel_ref: &RelPath = &rel;
+let path_ref: &Path = &rel;
+
+/// Type system enforces relative path requirement
+fn needs_relative_path(p: &RelPath) {
+}
+
+needs_relative_path(&rel);
+```
+
+#### Normalized paths remove redundant components
+```rust
+use dirge::{NormPath, NormPathBuf};
+use std::path::Path;
+
+let norm = NormPathBuf::new("path/./to/../file.txt").unwrap();
+assert_eq!(norm.to_string_lossy(), "path/file.txt");
+
+let norm_ref: &NormPath = &norm;
+let path_ref: &Path = &norm;
+
+/// Type system guarantees normalized paths
+fn needs_normalized_path(p: &NormPath) {
+}
+
+needs_normalized_path(&norm);
+```
 
 ### Background
 This crate provides portable extensions to the standard library's path functionality.
