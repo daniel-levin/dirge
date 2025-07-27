@@ -11,7 +11,6 @@ use ref_cast::RefCast;
 
 /// Equivalent to [PathBuf], but guaranteed to be absolute.
 #[derive(PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(transparent)]
 pub struct AbsPathBuf(PathBuf);
 
@@ -101,7 +100,7 @@ impl AbsPathBuf {
 }
 
 #[cfg(feature = "serde")]
-impl serde::Serialize for AbsPath {
+impl serde::Serialize for AbsPathBuf {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -111,16 +110,60 @@ impl serde::Serialize for AbsPath {
 }
 
 #[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for &'de AbsPath {
+impl<'de> serde::Deserialize<'de> for AbsPathBuf {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
-        let path = <&Path>::deserialize(deserializer)?;
-        if path.is_absolute() {
-            Ok(AbsPath::ref_cast(path))
+        let path_buf = PathBuf::deserialize(deserializer)?;
+        if path_buf.is_absolute() {
+            Ok(AbsPathBuf(path_buf))
         } else {
             Err(serde::de::Error::custom("path must be absolute"))
         }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for AbsPath {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.0.serialize(serializer)
+    }
+}
+
+#[cfg(all(test, feature = "serde"))]
+mod serde_tests {
+    use super::*;
+    use serde_test::{Token, assert_de_tokens_error, assert_tokens};
+
+    #[test]
+    fn test_abs_path_buf_serialize() {
+        let path_buf = AbsPathBuf::new("/home/user/file.txt").unwrap();
+        assert_tokens(&path_buf, &[Token::Str("/home/user/file.txt")]);
+    }
+
+    #[test]
+    fn test_abs_path_buf_deserialize() {
+        let path_buf = AbsPathBuf::new("/home/user/file.txt").unwrap();
+        assert_tokens(&path_buf, &[Token::Str("/home/user/file.txt")]);
+    }
+
+    #[test]
+    fn test_abs_path_buf_deserialize_invalid() {
+        assert_de_tokens_error::<AbsPathBuf>(
+            &[Token::Str("relative/path")],
+            "path must be absolute",
+        );
+    }
+
+    #[test]
+    fn test_abs_path_serialize() {
+        let path_buf = AbsPathBuf::new("/home/user/file.txt").unwrap();
+        let abs_path: &AbsPath = &path_buf;
+        use serde_test::{Token, assert_ser_tokens};
+        assert_ser_tokens(&abs_path, &[Token::Str("/home/user/file.txt")]);
     }
 }

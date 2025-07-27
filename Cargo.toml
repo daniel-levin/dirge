@@ -16,3 +16,6 @@ serde = ["dep:serde"]
 [dependencies]
 ref-cast = "1"
 serde = { version = "1", optional = true, features = ["derive"] }
+
+[dev-dependencies]
+serde_test = "1"
