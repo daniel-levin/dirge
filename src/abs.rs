@@ -97,6 +97,14 @@ impl AbsPathBuf {
     pub fn capacity(&self) -> usize {
         self.0.capacity()
     }
+
+    pub fn push<P: AsRef<Path>>(&mut self, path: P) {
+        self.0.push(path);
+    }
+
+    pub fn join<P: AsRef<Path>>(&self, path: P) -> AbsPathBuf {
+        AbsPathBuf(self.0.join(path))
+    }
 }
 
 #[cfg(feature = "serde")]

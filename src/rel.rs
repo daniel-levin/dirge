@@ -10,7 +10,7 @@ use std::fmt;
 use ref_cast::RefCast;
 
 /// Equivalent to [PathBuf], but guaranteed to be relative.
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone, Hash)]
 #[repr(transparent)]
 pub struct RelPathBuf(PathBuf);
 
