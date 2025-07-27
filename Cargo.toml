@@ -1,6 +1,6 @@
 [package]
 name = "dirge"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2024"
 description = "Convenient extensions to the standard library's path types"
 repository = "https://github.com/daniel-levin/dirge"
