@@ -38,7 +38,6 @@
 //! needs_relative_path(&rel);
 //! ```
 //!
-//!
 //! ## Background
 //! This crate provides portable extensions to the standard library's path functionality.
 //! Our types have specific usages while incurring no storage overhead. For example, [AbsPathBuf]
@@ -50,6 +49,8 @@
 //! - Enhance correctness through specific types.
 //! - Be conducive to re-exporting.
 //! - Be portable.
+
+#![deny(unsafe_code)]
 
 mod abs;
 mod rel;
