@@ -21,6 +21,23 @@
 //! let _ = std::fs::read_to_string(&a);
 //! ```
 //!
+//! ### Relative paths provide similar guarantees
+//! ```
+//! use dirge::{RelPath, RelPathBuf};
+//! use std::path::Path;
+//!
+//! let rel = RelPathBuf::new("src/main.rs").unwrap();
+//! let rel_ref: &RelPath = &rel;
+//! let path_ref: &Path = &rel;
+//!
+//! /// Type system enforces relative path requirement
+//! fn needs_relative_path(p: &RelPath) {
+//! # // ...
+//! }
+//!
+//! needs_relative_path(&rel);
+//! ```
+//!
 //!
 //! ## Background
 //! This crate provides portable extensions to the standard library's path functionality.
@@ -35,5 +52,7 @@
 //! - Be portable.
 
 mod abs;
+mod rel;
 
 pub use abs::{AbsPath, AbsPathBuf, ToAbsPathBuf};
+pub use rel::{RelPath, RelPathBuf, ToRelPathBuf};
