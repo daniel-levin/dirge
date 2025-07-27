@@ -38,6 +38,25 @@
 //! needs_relative_path(&rel);
 //! ```
 //!
+//! ### Normalized paths remove redundant components
+//! ```
+//! use dirge::{NormPath, NormPathBuf};
+//! use std::path::Path;
+//!
+//! let norm = NormPathBuf::new("path/./to/../file.txt").unwrap();
+//! assert_eq!(norm.to_string_lossy(), "path/file.txt");
+//!
+//! let norm_ref: &NormPath = &norm;
+//! let path_ref: &Path = &norm;
+//!
+//! /// Type system guarantees normalized paths
+//! fn needs_normalized_path(p: &NormPath) {
+//! # // ...
+//! }
+//!
+//! needs_normalized_path(&norm);
+//! ```
+//!
 //! ## Background
 //! This crate provides portable extensions to the standard library's path functionality.
 //! Our types have specific usages while incurring no storage overhead. For example, [AbsPathBuf]
@@ -53,7 +72,9 @@
 #![deny(unsafe_code)]
 
 mod abs;
+mod norm;
 mod rel;
 
 pub use abs::{AbsPath, AbsPathBuf, ToAbsPathBuf};
+pub use norm::{NormPath, NormPathBuf, ToNormPathBuf};
 pub use rel::{RelPath, RelPathBuf, ToRelPathBuf};
