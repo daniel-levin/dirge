@@ -166,18 +166,33 @@ fn components_that_look_like_prefixes() {
 
 #[test]
 fn joins_replace_roots_and_prefixes_without_losing_guarantees() {
-    for (base, suffix, expected) in [
-        (r"C:\base", "child", r"C:\base\child"),
-        (r"C:\base", r"\child", r"C:\child"),
-        (r"C:\base", "/child", r"C:\child"),
-        (r"C:\base", r"D:\child", r"D:\child"),
-        (r"C:\base", r"\\server\share\child", r"\\server\share\child"),
-        (r"\\server\share\base", r"\child", r"\\server\share\child"),
-        (r"\\?\C:\base", r"..\child", r"\\?\C:\child"),
+    for (base, suffix, absolute, normalized) in [
+        (r"C:\base", "child", r"C:\base\child", r"C:\base\child"),
+        (r"C:\base", r"\child", r"C:\child", r"C:\child"),
+        (r"C:\base", "/child", "C:/child", r"C:\child"),
+        (r"C:\base", r"D:\child", r"D:\child", r"D:\child"),
+        (
+            r"C:\base",
+            r"\\server\share\child",
+            r"\\server\share\child",
+            r"\\server\share\child",
+        ),
+        (
+            r"\\server\share\base",
+            r"\child",
+            r"\\server\share\child",
+            r"\\server\share\child",
+        ),
+        (
+            r"\\?\C:\base",
+            r"..\child",
+            r"\\?\C:\child",
+            r"\\?\C:\child",
+        ),
     ] {
         let mut path = AbsPathBuf::try_from(Utf8PathBuf::from(base)).unwrap();
         let joined = path.join(suffix).unwrap();
-        assert_eq!(joined.as_str(), expected, "{base:?} + {suffix:?}");
+        assert_eq!(joined.as_str(), absolute, "{base:?} + {suffix:?}");
         path.push(suffix).unwrap();
         assert_eq!(path, joined);
         assert!(AbsPath::new(path.as_path()).is_ok());
@@ -185,7 +200,7 @@ fn joins_replace_roots_and_prefixes_without_losing_guarantees() {
         let mut norm = AbsNormPathBuf::try_from(Utf8PathBuf::from(base)).unwrap();
         let joined = norm.join(suffix).unwrap();
         norm.push(suffix).unwrap();
-        assert_eq!(norm.as_str(), expected, "{base:?} + {suffix:?}");
+        assert_eq!(norm.as_str(), normalized, "{base:?} + {suffix:?}");
         assert_eq!(norm, joined);
         assert!(AbsNormPath::new(norm.as_path()).is_ok());
     }
