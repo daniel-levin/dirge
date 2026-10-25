@@ -9,7 +9,6 @@
 //! ### Absolute paths are just paths
 //! ```
 //! # fn example() -> AbsPathBuf { AbsPathBuf::new(".").unwrap() }
-//!
 //! use std::path::Path;
 //!
 //! use dirge::AbsPath;
@@ -83,6 +82,12 @@
 //! - Be portable.
 
 #![deny(unsafe_code)]
+
+#[cfg(feature = "camino")]
+pub(crate) type PathBuf = camino::Utf8PathBuf;
+
+#[cfg(not(feature = "camino"))]
+pub(crate) type PathBuf = std::path::PathBuf;
 
 mod abs;
 mod norm;
