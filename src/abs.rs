@@ -151,12 +151,18 @@ impl AbsPathBuf {
         self.0.capacity()
     }
 
-    pub fn push<P: AsRef<Path>>(&mut self, path: P) {
-        self.0.push(path);
+    pub fn push<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
+        *self = self.join(path)?;
+        Ok(())
     }
 
-    pub fn join<P: AsRef<Path>>(&self, path: P) -> AbsPathBuf {
-        AbsPathBuf(self.0.join(path))
+    pub fn join<P: AsRef<Path>>(&self, path: P) -> io::Result<AbsPathBuf> {
+        let joined = self.0.join(path);
+        if joined.is_absolute() {
+            Ok(Self(joined))
+        } else {
+            Self::new(joined)
+        }
     }
 }
 

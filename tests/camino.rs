@@ -46,8 +46,8 @@ fn normalization_preserves_unicode() {
 #[test]
 fn absolute_mutation_accepts_utf8_paths() {
     let mut abs = AbsPathBuf::new(".").unwrap();
-    let joined = abs.join(Utf8Path::new("文件.txt"));
-    abs.push(Utf8Path::new("文件.txt"));
+    let joined = abs.join(Utf8Path::new("文件.txt")).unwrap();
+    abs.push(Utf8Path::new("文件.txt")).unwrap();
     assert_eq!(abs, joined);
     assert_eq!(abs.file_name(), Some("文件.txt"));
 }
