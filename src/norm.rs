@@ -1,8 +1,9 @@
 use std::{
     borrow::Borrow,
+    ffi::OsString,
     io,
     ops::Deref,
-    path::{Component, Path, PathBuf},
+    path::{Component, MAIN_SEPARATOR_STR, Path, PathBuf},
 };
 
 use std::fmt;
@@ -11,14 +12,21 @@ use ref_cast::RefCast;
 
 /// Equivalent to [PathBuf], but guaranteed to be normalized.
 ///
-/// A normalized path has no `.` or `..` components and uses canonical separators.
+/// Normalization is lexical: redundant separators and `.` components are removed,
+/// and `..` cancels a preceding normal component. Unresolved leading `..`
+/// components are preserved in relative paths; traversal above a root is ignored.
+/// A nonempty path that cancels out becomes `.`. Windows prefixes are preserved,
+/// and component separators use the platform's main separator.
+///
+/// This does not access the filesystem or resolve symbolic links, so the result
+/// may refer to a different file when a removed component is a symbolic link.
 #[derive(PartialEq, Eq, Clone)]
 #[repr(transparent)]
 pub struct NormPathBuf(PathBuf);
 
 /// Equivalent to [Path], but guaranteed to be normalized.
 ///
-/// A normalized path has no `.` or `..` components and uses canonical separators.
+/// See [NormPathBuf] for the lexical normalization rules.
 #[derive(RefCast, PartialEq, Eq)]
 #[repr(transparent)]
 pub struct NormPath(Path);
@@ -58,32 +66,49 @@ pub trait ToNormPathBuf: AsRef<Path> {
 }
 
 fn normalize_path(path: &Path) -> PathBuf {
-    let mut normalized = PathBuf::new();
+    let mut components = Vec::new();
 
     for component in path.components() {
         match component {
-            Component::CurDir => {
-                // Skip "." components
-            }
+            Component::CurDir => {}
             Component::ParentDir => {
-                // Handle ".." by popping the last component if possible
-                if !normalized.pop() {
-                    // If we can't pop (empty path), keep the ".."
-                    normalized.push("..");
+                if matches!(components.last(), Some(Component::Normal(_))) {
+                    components.pop();
+                } else if !path.has_root() {
+                    components.push(component);
                 }
             }
-            _ => {
-                normalized.push(component);
-            }
+            _ => components.push(component),
         }
     }
 
+    // Append raw component text: PathBuf::push can reinterpret a normal Windows
+    // component such as "C:" as a prefix, or normalize verbatim paths again.
+    let mut normalized = OsString::new();
+    let mut needs_separator = false;
+    for component in components {
+        match component {
+            Component::Prefix(prefix) => normalized.push(prefix.as_os_str()),
+            Component::RootDir => normalized.push(MAIN_SEPARATOR_STR),
+            _ => {
+                if needs_separator {
+                    normalized.push(MAIN_SEPARATOR_STR);
+                }
+                normalized.push(component.as_os_str());
+            }
+        }
+        needs_separator = matches!(
+            component,
+            Component::Normal(_) | Component::ParentDir | Component::CurDir
+        );
+    }
+
     // If the path is now empty and the original wasn't, use "."
-    if normalized.as_os_str().is_empty() && !path.as_os_str().is_empty() {
+    if normalized.is_empty() && !path.as_os_str().is_empty() {
         normalized.push(".");
     }
 
-    normalized
+    PathBuf::from(normalized)
 }
 
 impl<P: AsRef<Path>> ToNormPathBuf for P {
@@ -173,13 +198,27 @@ mod serde_tests {
     #[test]
     fn test_norm_path_buf_serialize() {
         let path_buf = NormPathBuf::new("path/to/file.txt").unwrap();
-        assert_tokens(&path_buf, &[Token::Str("path/to/file.txt")]);
+        assert_tokens(
+            &path_buf,
+            &[Token::Str(if cfg!(windows) {
+                r"path\to\file.txt"
+            } else {
+                "path/to/file.txt"
+            })],
+        );
     }
 
     #[test]
     fn test_norm_path_buf_deserialize() {
         let path_buf = NormPathBuf::new("path/to/file.txt").unwrap();
-        assert_tokens(&path_buf, &[Token::Str("path/to/file.txt")]);
+        assert_tokens(
+            &path_buf,
+            &[Token::Str(if cfg!(windows) {
+                r"path\to\file.txt"
+            } else {
+                "path/to/file.txt"
+            })],
+        );
     }
 
     #[test]
@@ -193,6 +232,13 @@ mod serde_tests {
         let path_buf = NormPathBuf::new("path/to/file.txt").unwrap();
         let norm_path: &NormPath = &path_buf;
         use serde_test::{Token, assert_ser_tokens};
-        assert_ser_tokens(&norm_path, &[Token::Str("path/to/file.txt")]);
+        assert_ser_tokens(
+            &norm_path,
+            &[Token::Str(if cfg!(windows) {
+                r"path\to\file.txt"
+            } else {
+                "path/to/file.txt"
+            })],
+        );
     }
 }

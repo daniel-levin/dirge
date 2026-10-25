@@ -50,7 +50,7 @@
 //! use std::path::Path;
 //!
 //! let norm = NormPathBuf::new("path/./to/../file.txt").unwrap();
-//! assert_eq!(norm.to_string_lossy(), "path/file.txt");
+//! assert_eq!(norm.as_path(), Path::new("path/file.txt"));
 //!
 //! let norm_ref: &NormPath = &norm;
 //! let path_ref: &Path = &norm;

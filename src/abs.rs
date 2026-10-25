@@ -147,16 +147,22 @@ mod serde_tests {
     use super::*;
     use serde_test::{Token, assert_de_tokens_error, assert_tokens};
 
+    const ABS_PATH: &str = if cfg!(windows) {
+        r"C:\home\user\file.txt"
+    } else {
+        "/home/user/file.txt"
+    };
+
     #[test]
     fn test_abs_path_buf_serialize() {
-        let path_buf = AbsPathBuf::new("/home/user/file.txt").unwrap();
-        assert_tokens(&path_buf, &[Token::Str("/home/user/file.txt")]);
+        let path_buf = AbsPathBuf::new(ABS_PATH).unwrap();
+        assert_tokens(&path_buf, &[Token::Str(ABS_PATH)]);
     }
 
     #[test]
     fn test_abs_path_buf_deserialize() {
-        let path_buf = AbsPathBuf::new("/home/user/file.txt").unwrap();
-        assert_tokens(&path_buf, &[Token::Str("/home/user/file.txt")]);
+        let path_buf = AbsPathBuf::new(ABS_PATH).unwrap();
+        assert_tokens(&path_buf, &[Token::Str(ABS_PATH)]);
     }
 
     #[test]
@@ -169,9 +175,9 @@ mod serde_tests {
 
     #[test]
     fn test_abs_path_serialize() {
-        let path_buf = AbsPathBuf::new("/home/user/file.txt").unwrap();
+        let path_buf = AbsPathBuf::new(ABS_PATH).unwrap();
         let abs_path: &AbsPath = &path_buf;
         use serde_test::{Token, assert_ser_tokens};
-        assert_ser_tokens(&abs_path, &[Token::Str("/home/user/file.txt")]);
+        assert_ser_tokens(&abs_path, &[Token::Str(ABS_PATH)]);
     }
 }

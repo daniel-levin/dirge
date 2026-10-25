@@ -34,7 +34,14 @@ fn no_overhead() {
 
 #[test]
 fn rejects_absolute_paths() {
-    assert!(RelPathBuf::new("/absolute/path").is_err());
+    assert!(
+        RelPathBuf::new(if cfg!(windows) {
+            r"C:\absolute\path"
+        } else {
+            "/absolute/path"
+        })
+        .is_err()
+    );
 
     #[cfg(windows)]
     {

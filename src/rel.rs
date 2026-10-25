@@ -162,7 +162,11 @@ mod serde_tests {
     #[test]
     fn test_rel_path_buf_deserialize_invalid() {
         assert_de_tokens_error::<RelPathBuf>(
-            &[Token::Str("/absolute/path")],
+            &[Token::Str(if cfg!(windows) {
+                r"C:\absolute\path"
+            } else {
+                "/absolute/path"
+            })],
             "path must be relative",
         );
     }
