@@ -25,12 +25,16 @@ pub type PathBuf = camino::Utf8PathBuf;
 pub type PathBuf = std::path::PathBuf;
 
 mod abs;
+mod abs_norm;
 mod norm;
 mod rel;
 
 pub use abs::AbsPath;
 pub use abs::AbsPathBuf;
 pub use abs::ToAbsPathBuf;
+pub use abs_norm::AbsNormPath;
+pub use abs_norm::AbsNormPathBuf;
+pub use abs_norm::ToAbsNormPathBuf;
 pub use norm::NormPath;
 pub use norm::NormPathBuf;
 pub use norm::ToNormPathBuf;

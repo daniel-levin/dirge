@@ -185,7 +185,7 @@ pub trait ToNormPathBuf: AsRef<Path> {
     fn to_norm_path_buf(&self) -> io::Result<NormPathBuf>;
 }
 
-fn normalize_path(path: &std::path::Path) -> std::path::PathBuf {
+pub(crate) fn normalize_path(path: &std::path::Path) -> std::path::PathBuf {
     let mut components = Vec::new();
 
     for component in path.components() {
