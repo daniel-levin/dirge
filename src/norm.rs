@@ -12,22 +12,11 @@ use crate::Path;
 use crate::PathBuf;
 
 /// Equivalent to [PathBuf], but guaranteed to be normalized.
-///
-/// Normalization is lexical: redundant separators and `.` components are
-/// removed, and `..` cancels a preceding normal component. Unresolved leading
-/// `..` components are preserved in relative paths; traversal above a root is
-/// ignored. A nonempty path that cancels out becomes `.`. Windows prefixes are
-/// preserved, and component separators use the platform's main separator.
-///
-/// This does not access the filesystem or resolve symbolic links, so the result
-/// may refer to a different file when a removed component is a symbolic link.
 #[derive(PartialEq, Eq, Clone)]
 #[repr(transparent)]
 pub struct NormPathBuf(PathBuf);
 
 /// Equivalent to [Path], but guaranteed to be normalized.
-///
-/// See [NormPathBuf] for the lexical normalization rules.
 #[derive(RefCast, PartialEq, Eq)]
 #[repr(transparent)]
 pub struct NormPath(Path);
@@ -97,8 +86,6 @@ fn normalize_path(path: &std::path::Path) -> std::path::PathBuf {
         }
     }
 
-    // Append raw component text: PathBuf::push can reinterpret a normal Windows
-    // component such as "C:" as a prefix, or normalize verbatim paths again.
     let mut normalized = OsString::new();
     let mut needs_separator = false;
     for component in components {
@@ -118,7 +105,6 @@ fn normalize_path(path: &std::path::Path) -> std::path::PathBuf {
         );
     }
 
-    // If the path is now empty and the original wasn't, use "."
     if normalized.is_empty() && !path.as_os_str().is_empty() {
         normalized.push(".");
     }
@@ -164,27 +150,21 @@ impl ToOwned for NormPath {
 }
 
 impl NormPath {
-    /// Borrows the path as UTF-8. With `camino`, this always returns `&str`;
-    /// otherwise it returns `None` when the path is not valid UTF-8.
     #[cfg(feature = "camino")]
     pub fn as_str(&self) -> &str {
         self.0.as_str()
     }
 
-    /// Borrows the path as UTF-8. With `camino`, this always returns `&str`;
-    /// otherwise it returns `None` when the path is not valid UTF-8.
     #[cfg(not(feature = "camino"))]
     pub fn as_str(&self) -> Option<&str> {
         self.0.to_str()
     }
 
-    /// Equivalent to [`Self::as_str`], including its feature-dependent return type.
     #[cfg(feature = "camino")]
     pub fn to_str(&self) -> &str {
         self.as_str()
     }
 
-    /// Equivalent to [`Self::as_str`], including its feature-dependent return type.
     #[cfg(not(feature = "camino"))]
     pub fn to_str(&self) -> Option<&str> {
         self.as_str()
@@ -192,15 +172,11 @@ impl NormPath {
 }
 
 impl NormPathBuf {
-    /// Consumes the path into a UTF-8 string. With `camino`, this is infallible;
-    /// otherwise an invalid UTF-8 path is returned unchanged in `Err`.
     #[cfg(feature = "camino")]
     pub fn into_string(self) -> String {
         self.0.into_string()
     }
 
-    /// Consumes the path into a UTF-8 string. With `camino`, this is infallible;
-    /// otherwise an invalid UTF-8 path is returned unchanged in `Err`.
     #[cfg(not(feature = "camino"))]
     pub fn into_string(self) -> Result<String, Self> {
         self.0
@@ -237,7 +213,6 @@ impl<'de> serde::Deserialize<'de> for NormPathBuf {
         D: serde::Deserializer<'de>,
     {
         let path_buf = PathBuf::deserialize(deserializer)?;
-        // Always normalize during deserialization
         path_buf
             .to_norm_path_buf()
             .map_err(serde::de::Error::custom)
