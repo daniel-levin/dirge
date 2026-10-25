@@ -1,5 +1,7 @@
-use dirge::{RelPath, RelPathBuf};
 use std::path::Path;
+
+use dirge::RelPath;
+use dirge::RelPathBuf;
 
 #[test]
 fn basic() {

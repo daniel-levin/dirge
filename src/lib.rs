@@ -10,8 +10,10 @@
 //! ```
 //! # fn example() -> AbsPathBuf { AbsPathBuf::new(".").unwrap() }
 //!
-//! use dirge::{AbsPath, AbsPathBuf};
 //! use std::path::Path;
+//!
+//! use dirge::AbsPath;
+//! use dirge::AbsPathBuf;
 //!
 //! let a: AbsPathBuf = example();
 //! let b: &AbsPath = &a;
@@ -29,8 +31,10 @@
 //!
 //! ### Relative paths provide similar guarantees
 //! ```
-//! use dirge::{RelPath, RelPathBuf};
 //! use std::path::Path;
+//!
+//! use dirge::RelPath;
+//! use dirge::RelPathBuf;
 //!
 //! let rel = RelPathBuf::new("src/main.rs").unwrap();
 //! let rel_ref: &RelPath = &rel;
@@ -46,8 +50,10 @@
 //!
 //! ### Normalized paths remove redundant components
 //! ```
-//! use dirge::{NormPath, NormPathBuf};
 //! use std::path::Path;
+//!
+//! use dirge::NormPath;
+//! use dirge::NormPathBuf;
 //!
 //! let norm = NormPathBuf::new("path/./to/../file.txt").unwrap();
 //! assert_eq!(norm.as_path(), Path::new("path/file.txt"));
@@ -64,10 +70,11 @@
 //! ```
 //!
 //! ## Background
-//! This crate provides portable extensions to the standard library's path functionality.
-//! Our types have specific usages while incurring no storage overhead. For example, [AbsPathBuf]
-//! and [std::path::PathBuf] have identical in-memory representations, but the former is guaranteed
-//! to be an absolute path.
+//! This crate provides portable extensions to the standard library's path
+//! functionality. Our types have specific usages while incurring no storage
+//! overhead. For example, [AbsPathBuf] and [std::path::PathBuf] have identical
+//! in-memory representations, but the former is guaranteed to be an absolute
+//! path.
 //!
 //! This crate has several goals:
 //!
@@ -81,6 +88,12 @@ mod abs;
 mod norm;
 mod rel;
 
-pub use abs::{AbsPath, AbsPathBuf, ToAbsPathBuf};
-pub use norm::{NormPath, NormPathBuf, ToNormPathBuf};
-pub use rel::{RelPath, RelPathBuf, ToRelPathBuf};
+pub use abs::AbsPath;
+pub use abs::AbsPathBuf;
+pub use abs::ToAbsPathBuf;
+pub use norm::NormPath;
+pub use norm::NormPathBuf;
+pub use norm::ToNormPathBuf;
+pub use rel::RelPath;
+pub use rel::RelPathBuf;
+pub use rel::ToRelPathBuf;

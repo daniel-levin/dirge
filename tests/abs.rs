@@ -1,9 +1,11 @@
-use dirge::{AbsPath, AbsPathBuf, ToAbsPathBuf};
-use std::{
-    ffi::OsStr,
-    io,
-    path::{Component, PathBuf},
-};
+use std::ffi::OsStr;
+use std::io;
+use std::path::Component;
+use std::path::PathBuf;
+
+use dirge::AbsPath;
+use dirge::AbsPathBuf;
+use dirge::ToAbsPathBuf;
 
 #[test]
 #[cfg(target_family = "unix")]

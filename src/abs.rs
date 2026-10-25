@@ -1,11 +1,9 @@
-use std::{
-    borrow::Borrow,
-    io,
-    ops::Deref,
-    path::{Path, PathBuf},
-};
-
+use std::borrow::Borrow;
 use std::fmt;
+use std::io;
+use std::ops::Deref;
+use std::path::Path;
+use std::path::PathBuf;
 
 use ref_cast::RefCast;
 
@@ -144,8 +142,11 @@ impl serde::Serialize for AbsPath {
 
 #[cfg(all(test, feature = "serde"))]
 mod serde_tests {
+    use serde_test::Token;
+    use serde_test::assert_de_tokens_error;
+    use serde_test::assert_tokens;
+
     use super::*;
-    use serde_test::{Token, assert_de_tokens_error, assert_tokens};
 
     const ABS_PATH: &str = if cfg!(windows) {
         r"C:\home\user\file.txt"
@@ -177,7 +178,8 @@ mod serde_tests {
     fn test_abs_path_serialize() {
         let path_buf = AbsPathBuf::new(ABS_PATH).unwrap();
         let abs_path: &AbsPath = &path_buf;
-        use serde_test::{Token, assert_ser_tokens};
+        use serde_test::Token;
+        use serde_test::assert_ser_tokens;
         assert_ser_tokens(&abs_path, &[Token::Str(ABS_PATH)]);
     }
 }

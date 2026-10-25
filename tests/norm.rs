@@ -1,5 +1,7 @@
-use dirge::{NormPath, NormPathBuf};
 use std::path::Path;
+
+use dirge::NormPath;
+use dirge::NormPathBuf;
 
 #[test]
 fn basic() {
@@ -130,7 +132,8 @@ fn windows_prefixes_and_separators() {
 #[cfg(unix)]
 #[test]
 fn preserves_non_utf8_components() {
-    use std::{ffi::OsStr, os::unix::ffi::OsStrExt};
+    use std::ffi::OsStr;
+    use std::os::unix::ffi::OsStrExt;
     let norm = NormPathBuf::new(OsStr::from_bytes(b"\xff/a/../b")).unwrap();
     assert_eq!(norm.as_os_str().as_bytes(), b"\xff/b");
 }

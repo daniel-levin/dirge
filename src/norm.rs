@@ -1,22 +1,22 @@
-use std::{
-    borrow::Borrow,
-    ffi::OsString,
-    io,
-    ops::Deref,
-    path::{Component, MAIN_SEPARATOR_STR, Path, PathBuf},
-};
-
+use std::borrow::Borrow;
+use std::ffi::OsString;
 use std::fmt;
+use std::io;
+use std::ops::Deref;
+use std::path::Component;
+use std::path::MAIN_SEPARATOR_STR;
+use std::path::Path;
+use std::path::PathBuf;
 
 use ref_cast::RefCast;
 
 /// Equivalent to [PathBuf], but guaranteed to be normalized.
 ///
-/// Normalization is lexical: redundant separators and `.` components are removed,
-/// and `..` cancels a preceding normal component. Unresolved leading `..`
-/// components are preserved in relative paths; traversal above a root is ignored.
-/// A nonempty path that cancels out becomes `.`. Windows prefixes are preserved,
-/// and component separators use the platform's main separator.
+/// Normalization is lexical: redundant separators and `.` components are
+/// removed, and `..` cancels a preceding normal component. Unresolved leading
+/// `..` components are preserved in relative paths; traversal above a root is
+/// ignored. A nonempty path that cancels out becomes `.`. Windows prefixes are
+/// preserved, and component separators use the platform's main separator.
 ///
 /// This does not access the filesystem or resolve symbolic links, so the result
 /// may refer to a different file when a removed component is a symbolic link.
@@ -192,8 +192,11 @@ impl serde::Serialize for NormPath {
 
 #[cfg(all(test, feature = "serde"))]
 mod serde_tests {
+    use serde_test::Token;
+    use serde_test::assert_de_tokens;
+    use serde_test::assert_tokens;
+
     use super::*;
-    use serde_test::{Token, assert_de_tokens, assert_tokens};
 
     #[test]
     fn test_norm_path_buf_serialize() {
@@ -231,7 +234,8 @@ mod serde_tests {
     fn test_norm_path_serialize() {
         let path_buf = NormPathBuf::new("path/to/file.txt").unwrap();
         let norm_path: &NormPath = &path_buf;
-        use serde_test::{Token, assert_ser_tokens};
+        use serde_test::Token;
+        use serde_test::assert_ser_tokens;
         assert_ser_tokens(
             &norm_path,
             &[Token::Str(if cfg!(windows) {
