@@ -1,26 +1,15 @@
-use std::ffi::OsStr;
 use std::io;
-use std::path::Component;
-use std::path::PathBuf;
 
 use dirge::AbsPath;
 use dirge::AbsPathBuf;
 use dirge::ToAbsPathBuf;
 
 #[test]
-#[cfg(target_family = "unix")]
-fn no_overhead() -> io::Result<()> {
-    let dn1 = AbsPathBuf::new("/dev/null");
-
-    let pb: PathBuf = unsafe { std::mem::transmute(dn1) };
-
-    let mut comps = pb.components();
-
-    assert_eq!(comps.next(), Some(Component::RootDir));
-    assert_eq!(comps.next(), Some(Component::Normal(OsStr::new("dev"))));
-    assert_eq!(comps.next(), Some(Component::Normal(OsStr::new("null"))));
-
-    Ok(())
+fn no_overhead() {
+    assert_eq!(
+        std::mem::size_of::<AbsPathBuf>(),
+        std::mem::size_of::<std::path::PathBuf>()
+    );
 }
 
 #[test]

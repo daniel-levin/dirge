@@ -5,10 +5,11 @@ use std::io;
 use std::ops::Deref;
 use std::path::Component;
 use std::path::MAIN_SEPARATOR_STR;
-use std::path::Path;
-use std::path::PathBuf;
 
 use ref_cast::RefCast;
+
+use crate::Path;
+use crate::PathBuf;
 
 /// Equivalent to [PathBuf], but guaranteed to be normalized.
 ///
@@ -61,11 +62,25 @@ impl AsRef<Path> for NormPath {
     }
 }
 
+#[cfg(feature = "camino")]
+impl AsRef<std::path::Path> for NormPathBuf {
+    fn as_ref(&self) -> &std::path::Path {
+        self.0.as_std_path()
+    }
+}
+
+#[cfg(feature = "camino")]
+impl AsRef<std::path::Path> for NormPath {
+    fn as_ref(&self) -> &std::path::Path {
+        self.0.as_std_path()
+    }
+}
+
 pub trait ToNormPathBuf: AsRef<Path> {
     fn to_norm_path_buf(&self) -> io::Result<NormPathBuf>;
 }
 
-fn normalize_path(path: &Path) -> PathBuf {
+fn normalize_path(path: &std::path::Path) -> std::path::PathBuf {
     let mut components = Vec::new();
 
     for component in path.components() {
@@ -108,13 +123,13 @@ fn normalize_path(path: &Path) -> PathBuf {
         normalized.push(".");
     }
 
-    PathBuf::from(normalized)
+    std::path::PathBuf::from(normalized)
 }
 
 impl<P: AsRef<Path>> ToNormPathBuf for P {
     fn to_norm_path_buf(&self) -> io::Result<NormPathBuf> {
-        let normalized = normalize_path(self.as_ref());
-        Ok(NormPathBuf(normalized))
+        let normalized = normalize_path(self.as_ref().as_ref());
+        Ok(NormPathBuf(crate::from_std_path_buf(normalized)?))
     }
 }
 
@@ -176,7 +191,9 @@ impl<'de> serde::Deserialize<'de> for NormPathBuf {
     {
         let path_buf = PathBuf::deserialize(deserializer)?;
         // Always normalize during deserialization
-        Ok(NormPathBuf(normalize_path(&path_buf)))
+        path_buf
+            .to_norm_path_buf()
+            .map_err(serde::de::Error::custom)
     }
 }
 

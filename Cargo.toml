@@ -12,7 +12,7 @@ categories = ["os", "filesystem"]
 [features]
 default = []
 camino = ["dep:camino"]
-serde = ["dep:serde"]
+serde = ["dep:serde", "camino?/serde1"]
 
 [dependencies]
 ref-cast = "1"

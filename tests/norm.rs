@@ -1,5 +1,8 @@
+#[cfg(not(feature = "camino"))]
 use std::path::Path;
 
+#[cfg(feature = "camino")]
+use camino::Utf8Path as Path;
 use dirge::NormPath;
 use dirge::NormPathBuf;
 
@@ -14,7 +17,7 @@ fn basic() {
 fn deref_to_norm_path() {
     let norm = NormPathBuf::new("path/to/file.txt").unwrap();
     let norm_path: &NormPath = &norm;
-    assert_eq!(norm_path.as_ref(), Path::new("path/to/file.txt"));
+    assert_eq!(&**norm_path, Path::new("path/to/file.txt"));
 }
 
 #[test]
@@ -129,7 +132,7 @@ fn windows_prefixes_and_separators() {
     }
 }
 
-#[cfg(unix)]
+#[cfg(all(unix, not(feature = "camino")))]
 #[test]
 fn preserves_non_utf8_components() {
     use std::ffi::OsStr;

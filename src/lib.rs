@@ -9,8 +9,11 @@
 //! ### Absolute paths are just paths
 //! ```
 //! # fn example() -> AbsPathBuf { AbsPathBuf::new(".").unwrap() }
+//! # #[cfg(not(feature = "camino"))]
 //! use std::path::Path;
 //!
+//! # #[cfg(feature = "camino")]
+//! # use camino::Utf8Path as Path;
 //! use dirge::AbsPath;
 //! use dirge::AbsPathBuf;
 //!
@@ -30,8 +33,11 @@
 //!
 //! ### Relative paths provide similar guarantees
 //! ```
+//! # #[cfg(not(feature = "camino"))]
 //! use std::path::Path;
 //!
+//! # #[cfg(feature = "camino")]
+//! # use camino::Utf8Path as Path;
 //! use dirge::RelPath;
 //! use dirge::RelPathBuf;
 //!
@@ -49,8 +55,11 @@
 //!
 //! ### Normalized paths remove redundant components
 //! ```
+//! # #[cfg(not(feature = "camino"))]
 //! use std::path::Path;
 //!
+//! # #[cfg(feature = "camino")]
+//! # use camino::Utf8Path as Path;
 //! use dirge::NormPath;
 //! use dirge::NormPathBuf;
 //!
@@ -68,6 +77,17 @@
 //! needs_normalized_path(&norm);
 //! ```
 //!
+//! ## Features
+//! With `camino` enabled, all owned and borrowed path types wrap
+//! `camino::Utf8PathBuf` and `camino::Utf8Path` instead of the standard
+//! library path types. Constructors accept UTF-8 paths, and dereferencing
+//! exposes Camino's string-based API. `AsRef<std::path::Path>` remains
+//! available for filesystem APIs. Resolving an absolute path returns an error
+//! if the resulting path (including the current directory) is not valid UTF-8.
+//!
+//! The `serde` feature supports either backend, including when both features
+//! are enabled.
+//!
 //! ## Background
 //! This crate provides portable extensions to the standard library's path
 //! functionality. Our types have specific usages while incurring no storage
@@ -82,6 +102,12 @@
 //! - Be portable.
 
 #![deny(unsafe_code)]
+
+#[cfg(feature = "camino")]
+pub(crate) type Path = camino::Utf8Path;
+
+#[cfg(not(feature = "camino"))]
+pub(crate) type Path = std::path::Path;
 
 #[cfg(feature = "camino")]
 pub(crate) type PathBuf = camino::Utf8PathBuf;
@@ -102,3 +128,29 @@ pub use norm::ToNormPathBuf;
 pub use rel::RelPath;
 pub use rel::RelPathBuf;
 pub use rel::ToRelPathBuf;
+
+fn from_std_path_buf(path: std::path::PathBuf) -> std::io::Result<PathBuf> {
+    #[cfg(feature = "camino")]
+    {
+        camino::Utf8PathBuf::from_path_buf(path).map_err(|_| {
+            std::io::Error::new(std::io::ErrorKind::InvalidData, "path is not valid UTF-8")
+        })
+    }
+    #[cfg(not(feature = "camino"))]
+    {
+        Ok(path)
+    }
+}
+
+#[cfg(all(test, feature = "camino", unix))]
+mod tests {
+    #[test]
+    fn rejects_non_utf8_resolved_paths() {
+        use std::ffi::OsString;
+        use std::os::unix::ffi::OsStringExt;
+
+        let path = std::path::PathBuf::from(OsString::from_vec(b"/tmp/\xff".to_vec()));
+        let error = super::from_std_path_buf(path).unwrap_err();
+        assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
+    }
+}

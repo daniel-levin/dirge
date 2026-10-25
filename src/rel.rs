@@ -2,10 +2,11 @@ use std::borrow::Borrow;
 use std::fmt;
 use std::io;
 use std::ops::Deref;
-use std::path::Path;
-use std::path::PathBuf;
 
 use ref_cast::RefCast;
+
+use crate::Path;
+use crate::PathBuf;
 
 /// Equivalent to [PathBuf], but guaranteed to be relative.
 #[derive(PartialEq, Eq, Clone, Hash)]
@@ -44,6 +45,20 @@ impl AsRef<Path> for RelPathBuf {
 impl AsRef<Path> for RelPath {
     fn as_ref(&self) -> &Path {
         &self.0
+    }
+}
+
+#[cfg(feature = "camino")]
+impl AsRef<std::path::Path> for RelPathBuf {
+    fn as_ref(&self) -> &std::path::Path {
+        self.0.as_std_path()
+    }
+}
+
+#[cfg(feature = "camino")]
+impl AsRef<std::path::Path> for RelPath {
+    fn as_ref(&self) -> &std::path::Path {
+        self.0.as_std_path()
     }
 }
 

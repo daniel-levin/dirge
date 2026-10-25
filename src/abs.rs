@@ -2,10 +2,11 @@ use std::borrow::Borrow;
 use std::fmt;
 use std::io;
 use std::ops::Deref;
-use std::path::Path;
-use std::path::PathBuf;
 
 use ref_cast::RefCast;
+
+use crate::Path;
+use crate::PathBuf;
 
 /// Equivalent to [PathBuf], but guaranteed to be absolute.
 #[derive(PartialEq, Eq, Clone)]
@@ -47,13 +48,29 @@ impl AsRef<Path> for AbsPath {
     }
 }
 
+#[cfg(feature = "camino")]
+impl AsRef<std::path::Path> for AbsPathBuf {
+    fn as_ref(&self) -> &std::path::Path {
+        self.0.as_std_path()
+    }
+}
+
+#[cfg(feature = "camino")]
+impl AsRef<std::path::Path> for AbsPath {
+    fn as_ref(&self) -> &std::path::Path {
+        self.0.as_std_path()
+    }
+}
+
 pub trait ToAbsPathBuf: AsRef<Path> {
     fn to_abs_path_buf(&self) -> io::Result<AbsPathBuf>;
 }
 
 impl<P: AsRef<Path>> ToAbsPathBuf for P {
     fn to_abs_path_buf(&self) -> io::Result<AbsPathBuf> {
-        Ok(AbsPathBuf(std::path::absolute(self)?))
+        Ok(AbsPathBuf(crate::from_std_path_buf(std::path::absolute(
+            self.as_ref(),
+        )?)?))
     }
 }
 

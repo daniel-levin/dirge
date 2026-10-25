@@ -1,5 +1,8 @@
+#[cfg(not(feature = "camino"))]
 use std::path::Path;
 
+#[cfg(feature = "camino")]
+use camino::Utf8Path as Path;
 use dirge::RelPath;
 use dirge::RelPathBuf;
 
@@ -14,7 +17,7 @@ fn basic() {
 fn deref_to_rel_path() {
     let rel = RelPathBuf::new("src/main.rs").unwrap();
     let rel_path: &RelPath = &rel;
-    assert_eq!(rel_path.to_string_lossy(), "src/main.rs");
+    assert_eq!(rel_path.as_os_str().to_string_lossy(), "src/main.rs");
 }
 
 #[test]
