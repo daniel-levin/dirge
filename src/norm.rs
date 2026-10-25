@@ -145,7 +145,7 @@ use crate::Utf8PathBuf;
 #[repr(transparent)]
 pub struct NormPathBuf(Utf8PathBuf);
 
-/// Equivalent to [Utf8Path], but guaranteed to be normalized.
+/// Equivalent to [`Utf8Path`], but guaranteed to be normalized.
 #[derive(RefCastCustom, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct NormPath(Utf8Path);

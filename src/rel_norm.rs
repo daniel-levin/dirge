@@ -40,7 +40,7 @@ use crate::Utf8PathBuf;
 #[repr(transparent)]
 pub struct RelNormPathBuf(Utf8PathBuf);
 
-/// Equivalent to [Utf8Path], but guaranteed to be relative and normalized.
+/// Equivalent to [`Utf8Path`], but guaranteed to be relative and normalized.
 #[derive(RefCastCustom, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct RelNormPath(Utf8Path);

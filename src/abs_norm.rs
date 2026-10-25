@@ -31,7 +31,7 @@ use crate::Utf8PathBuf;
 #[repr(transparent)]
 pub struct AbsNormPathBuf(Utf8PathBuf);
 
-/// Equivalent to [Utf8Path], but guaranteed to be absolute and normalized.
+/// Equivalent to [`Utf8Path`], but guaranteed to be absolute and normalized.
 #[derive(RefCastCustom, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct AbsNormPath(Utf8Path);

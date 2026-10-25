@@ -9,12 +9,12 @@ use ref_cast::ref_cast_custom;
 use crate::Utf8Path;
 use crate::Utf8PathBuf;
 
-/// Equivalent to [Utf8PathBuf], but guaranteed to be relative.
+/// Equivalent to [`Utf8PathBuf`], but guaranteed to be relative.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
 #[repr(transparent)]
 pub struct RelPathBuf(Utf8PathBuf);
 
-/// Equivalent to [Utf8Path], but guaranteed to be relative.
+/// Equivalent to [`Utf8Path`], but guaranteed to be relative.
 #[derive(RefCastCustom, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct RelPath(Utf8Path);
