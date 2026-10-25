@@ -17,6 +17,7 @@ pub use camino::Utf8PathBuf;
 
 mod abs;
 mod abs_norm;
+mod guarantees;
 mod norm;
 mod rel;
 mod rel_norm;
@@ -27,6 +28,9 @@ pub use abs::ToAbsPathBuf;
 pub use abs_norm::AbsNormPath;
 pub use abs_norm::AbsNormPathBuf;
 pub use abs_norm::ToAbsNormPathBuf;
+pub use guarantees::AbsolutePath;
+pub use guarantees::NormalizedPath;
+pub use guarantees::RelativePath;
 pub use norm::NormPath;
 pub use norm::NormPathBuf;
 pub use norm::ToNormPathBuf;
