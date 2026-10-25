@@ -127,12 +127,3 @@ fn windows_prefixes_and_separators() {
         assert_eq!(again.as_os_str(), norm.as_os_str(), "{input:?}");
     }
 }
-
-#[cfg(all(unix, not(feature = "camino")))]
-#[test]
-fn preserves_non_utf8_components() {
-    use std::ffi::OsStr;
-    use std::os::unix::ffi::OsStrExt;
-    let norm = NormPathBuf::new(OsStr::from_bytes(b"\xff/a/../b")).unwrap();
-    assert_eq!(norm.as_os_str().as_bytes(), b"\xff/b");
-}

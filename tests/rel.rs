@@ -1,8 +1,4 @@
-#[cfg(not(feature = "camino"))]
-use std::path::Path;
-
-#[cfg(feature = "camino")]
-use camino::Utf8Path as Path;
+use dirge::Path;
 use dirge::RelPath;
 use dirge::RelPathBuf;
 

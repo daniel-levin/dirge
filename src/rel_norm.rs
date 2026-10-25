@@ -72,14 +72,12 @@ impl AsRef<Path> for RelNormPath {
     }
 }
 
-#[cfg(feature = "camino")]
 impl AsRef<std::path::Path> for RelNormPathBuf {
     fn as_ref(&self) -> &std::path::Path {
         self.0.as_std_path()
     }
 }
 
-#[cfg(feature = "camino")]
 impl AsRef<std::path::Path> for RelNormPath {
     fn as_ref(&self) -> &std::path::Path {
         self.0.as_std_path()
@@ -149,39 +147,18 @@ impl RelNormPath {
         crate::NormPath::ref_cast(&self.0)
     }
 
-    #[cfg(feature = "camino")]
     pub fn as_str(&self) -> &str {
         self.0.as_str()
     }
 
-    #[cfg(not(feature = "camino"))]
-    pub fn as_str(&self) -> Option<&str> {
-        self.0.to_str()
-    }
-
-    #[cfg(feature = "camino")]
     pub fn to_str(&self) -> &str {
-        self.as_str()
-    }
-
-    #[cfg(not(feature = "camino"))]
-    pub fn to_str(&self) -> Option<&str> {
         self.as_str()
     }
 }
 
 impl RelNormPathBuf {
-    #[cfg(feature = "camino")]
     pub fn into_string(self) -> String {
         self.0.into_string()
-    }
-
-    #[cfg(not(feature = "camino"))]
-    pub fn into_string(self) -> Result<String, Self> {
-        self.0
-            .into_os_string()
-            .into_string()
-            .map_err(|path| Self(path.into()))
     }
 }
 

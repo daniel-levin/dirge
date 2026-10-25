@@ -12,17 +12,8 @@
 
 #![deny(unsafe_code)]
 
-#[cfg(feature = "camino")]
-pub type Path = camino::Utf8Path;
-
-#[cfg(not(feature = "camino"))]
-pub type Path = std::path::Path;
-
-#[cfg(feature = "camino")]
-pub type PathBuf = camino::Utf8PathBuf;
-
-#[cfg(not(feature = "camino"))]
-pub type PathBuf = std::path::PathBuf;
+pub use camino::Utf8Path as Path;
+pub use camino::Utf8PathBuf as PathBuf;
 
 mod abs;
 mod abs_norm;
@@ -47,19 +38,12 @@ pub use rel_norm::RelNormPathBuf;
 pub use rel_norm::ToRelNormPathBuf;
 
 fn from_std_path_buf(path: std::path::PathBuf) -> std::io::Result<PathBuf> {
-    #[cfg(feature = "camino")]
-    {
-        camino::Utf8PathBuf::from_path_buf(path).map_err(|_| {
-            std::io::Error::new(std::io::ErrorKind::InvalidData, "path is not valid UTF-8")
-        })
-    }
-    #[cfg(not(feature = "camino"))]
-    {
-        Ok(path)
-    }
+    PathBuf::from_path_buf(path).map_err(|_| {
+        std::io::Error::new(std::io::ErrorKind::InvalidData, "path is not valid UTF-8")
+    })
 }
 
-#[cfg(all(test, feature = "camino", unix))]
+#[cfg(all(test, unix))]
 mod tests {
     #[test]
     fn rejects_non_utf8_resolved_paths() {
