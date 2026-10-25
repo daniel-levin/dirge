@@ -3,18 +3,19 @@ use std::fmt;
 use std::io;
 use std::ops::Deref;
 
-use ref_cast::RefCast;
+use ref_cast::RefCastCustom;
+use ref_cast::ref_cast_custom;
 
 use crate::Path;
 use crate::PathBuf;
 
 /// Equivalent to [PathBuf], but guaranteed to be absolute.
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
 #[repr(transparent)]
 pub struct AbsPathBuf(PathBuf);
 
 /// Equivalent to [Path], but guaranteed to be absolute.
-#[derive(RefCast, PartialEq, Eq)]
+#[derive(RefCastCustom, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct AbsPath(Path);
 
@@ -235,5 +236,72 @@ mod serde_tests {
         use serde_test::Token;
         use serde_test::assert_ser_tokens;
         assert_ser_tokens(&abs_path, &[Token::Str(ABS_PATH)]);
+    }
+}
+
+impl AbsPath {
+    #[ref_cast_custom]
+    pub(crate) fn ref_cast(path: &Path) -> &Self;
+
+    /// ```
+    /// use dirge::AbsPath;
+    /// use dirge::AbsPathBuf;
+    /// let owned = AbsPathBuf::new("a").unwrap();
+    /// assert_eq!(AbsPath::new(owned.as_path()).unwrap(), &*owned);
+    /// ```
+    ///
+    /// ```compile_fail
+    /// use dirge::{AbsPath, Path};
+    /// use ref_cast::RefCast;
+    /// let _ = AbsPath::ref_cast(Path::new("a/.."));
+    /// ```
+    pub fn new<P: AsRef<Path> + ?Sized>(path: &P) -> io::Result<&Self> {
+        let path = path.as_ref();
+        if path.is_absolute() {
+            Ok(Self::ref_cast(path))
+        } else {
+            Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "path must be absolute",
+            ))
+        }
+    }
+}
+
+impl<'a> TryFrom<&'a Path> for &'a AbsPath {
+    type Error = io::Error;
+
+    fn try_from(path: &'a Path) -> Result<Self, Self::Error> {
+        AbsPath::new(path)
+    }
+}
+
+impl AbsPathBuf {
+    pub fn into_path_buf(self) -> PathBuf {
+        self.0
+    }
+}
+
+impl From<AbsPathBuf> for PathBuf {
+    fn from(path: AbsPathBuf) -> Self {
+        path.0
+    }
+}
+
+impl TryFrom<PathBuf> for AbsPathBuf {
+    type Error = PathBuf;
+
+    fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
+        if AbsPath::new(&path).is_ok() {
+            Ok(Self(path))
+        } else {
+            Err(path)
+        }
+    }
+}
+
+impl From<crate::AbsNormPathBuf> for AbsPathBuf {
+    fn from(path: crate::AbsNormPathBuf) -> Self {
+        Self(path.into_path_buf())
     }
 }

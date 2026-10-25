@@ -3,7 +3,8 @@ use std::fmt;
 use std::io;
 use std::ops::Deref;
 
-use ref_cast::RefCast;
+use ref_cast::RefCastCustom;
+use ref_cast::ref_cast_custom;
 
 use crate::Path;
 use crate::PathBuf;
@@ -26,12 +27,12 @@ use crate::PathBuf;
 ///     AbsNormPathBuf::new("b").unwrap().as_path()
 /// );
 /// ```
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
 #[repr(transparent)]
 pub struct AbsNormPathBuf(PathBuf);
 
 /// Equivalent to [Path], but guaranteed to be absolute and normalized.
-#[derive(RefCast, PartialEq, Eq)]
+#[derive(RefCastCustom, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct AbsNormPath(Path);
 
@@ -261,5 +262,66 @@ mod serde_tests {
         use serde_test::Token;
         use serde_test::assert_ser_tokens;
         assert_ser_tokens(&abs_path, &[Token::Str(ABS_PATH)]);
+    }
+}
+
+impl AbsNormPath {
+    #[ref_cast_custom]
+    pub(crate) fn ref_cast(path: &Path) -> &Self;
+
+    /// ```
+    /// use dirge::AbsNormPath;
+    /// use dirge::AbsNormPathBuf;
+    /// let owned = AbsNormPathBuf::new("a").unwrap();
+    /// assert_eq!(AbsNormPath::new(owned.as_path()).unwrap(), &*owned);
+    /// ```
+    ///
+    /// ```compile_fail
+    /// use dirge::{AbsNormPath, Path};
+    /// use ref_cast::RefCast;
+    /// let _ = AbsNormPath::ref_cast(Path::new("a/.."));
+    /// ```
+    pub fn new<P: AsRef<Path> + ?Sized>(path: &P) -> io::Result<&Self> {
+        let path = path.as_ref();
+        if path.is_absolute() && crate::norm::is_normalized(path.as_ref()) {
+            Ok(Self::ref_cast(path))
+        } else {
+            Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "path must be absolute and normalized",
+            ))
+        }
+    }
+}
+
+impl<'a> TryFrom<&'a Path> for &'a AbsNormPath {
+    type Error = io::Error;
+
+    fn try_from(path: &'a Path) -> Result<Self, Self::Error> {
+        AbsNormPath::new(path)
+    }
+}
+
+impl AbsNormPathBuf {
+    pub fn into_path_buf(self) -> PathBuf {
+        self.0
+    }
+}
+
+impl From<AbsNormPathBuf> for PathBuf {
+    fn from(path: AbsNormPathBuf) -> Self {
+        path.0
+    }
+}
+
+impl TryFrom<PathBuf> for AbsNormPathBuf {
+    type Error = PathBuf;
+
+    fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
+        if AbsNormPath::new(&path).is_ok() {
+            Ok(Self(path))
+        } else {
+            Err(path)
+        }
     }
 }

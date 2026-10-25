@@ -3,18 +3,19 @@ use std::fmt;
 use std::io;
 use std::ops::Deref;
 
-use ref_cast::RefCast;
+use ref_cast::RefCastCustom;
+use ref_cast::ref_cast_custom;
 
 use crate::Path;
 use crate::PathBuf;
 
 /// Equivalent to [PathBuf], but guaranteed to be relative.
-#[derive(PartialEq, Eq, Clone, Hash)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
 #[repr(transparent)]
 pub struct RelPathBuf(PathBuf);
 
 /// Equivalent to [Path], but guaranteed to be relative.
-#[derive(RefCast, PartialEq, Eq)]
+#[derive(RefCastCustom, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct RelPath(Path);
 
@@ -231,5 +232,72 @@ mod serde_tests {
         use serde_test::Token;
         use serde_test::assert_ser_tokens;
         assert_ser_tokens(&rel_path, &[Token::Str("relative/path.txt")]);
+    }
+}
+
+impl RelPath {
+    #[ref_cast_custom]
+    pub(crate) fn ref_cast(path: &Path) -> &Self;
+
+    /// ```
+    /// use dirge::RelPath;
+    /// use dirge::RelPathBuf;
+    /// let owned = RelPathBuf::new("a").unwrap();
+    /// assert_eq!(RelPath::new(owned.as_path()).unwrap(), &*owned);
+    /// ```
+    ///
+    /// ```compile_fail
+    /// use dirge::{RelPath, Path};
+    /// use ref_cast::RefCast;
+    /// let _ = RelPath::ref_cast(Path::new("a/.."));
+    /// ```
+    pub fn new<P: AsRef<Path> + ?Sized>(path: &P) -> io::Result<&Self> {
+        let path = path.as_ref();
+        if path.is_relative() {
+            Ok(Self::ref_cast(path))
+        } else {
+            Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "path must be relative",
+            ))
+        }
+    }
+}
+
+impl<'a> TryFrom<&'a Path> for &'a RelPath {
+    type Error = io::Error;
+
+    fn try_from(path: &'a Path) -> Result<Self, Self::Error> {
+        RelPath::new(path)
+    }
+}
+
+impl RelPathBuf {
+    pub fn into_path_buf(self) -> PathBuf {
+        self.0
+    }
+}
+
+impl From<RelPathBuf> for PathBuf {
+    fn from(path: RelPathBuf) -> Self {
+        path.0
+    }
+}
+
+impl TryFrom<PathBuf> for RelPathBuf {
+    type Error = PathBuf;
+
+    fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
+        if RelPath::new(&path).is_ok() {
+            Ok(Self(path))
+        } else {
+            Err(path)
+        }
+    }
+}
+
+impl From<crate::RelNormPathBuf> for RelPathBuf {
+    fn from(path: crate::RelNormPathBuf) -> Self {
+        Self(path.into_path_buf())
     }
 }

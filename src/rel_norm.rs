@@ -3,7 +3,8 @@ use std::fmt;
 use std::io;
 use std::ops::Deref;
 
-use ref_cast::RefCast;
+use ref_cast::RefCastCustom;
+use ref_cast::ref_cast_custom;
 
 use crate::Path;
 use crate::PathBuf;
@@ -32,12 +33,12 @@ use crate::PathBuf;
 /// let absolute = if cfg!(windows) { r"C:\a" } else { "/a" };
 /// assert_eq!(RelNormPathBuf::new(absolute).is_err(), true);
 /// ```
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
 #[repr(transparent)]
 pub struct RelNormPathBuf(PathBuf);
 
 /// Equivalent to [Path], but guaranteed to be relative and normalized.
-#[derive(RefCast, PartialEq, Eq)]
+#[derive(RefCastCustom, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct RelNormPath(Path);
 
@@ -231,5 +232,66 @@ impl serde::Serialize for RelNormPath {
         S: serde::Serializer,
     {
         self.0.serialize(serializer)
+    }
+}
+
+impl RelNormPath {
+    #[ref_cast_custom]
+    pub(crate) fn ref_cast(path: &Path) -> &Self;
+
+    /// ```
+    /// use dirge::RelNormPath;
+    /// use dirge::RelNormPathBuf;
+    /// let owned = RelNormPathBuf::new("a").unwrap();
+    /// assert_eq!(RelNormPath::new(owned.as_path()).unwrap(), &*owned);
+    /// ```
+    ///
+    /// ```compile_fail
+    /// use dirge::{RelNormPath, Path};
+    /// use ref_cast::RefCast;
+    /// let _ = RelNormPath::ref_cast(Path::new("a/.."));
+    /// ```
+    pub fn new<P: AsRef<Path> + ?Sized>(path: &P) -> io::Result<&Self> {
+        let path = path.as_ref();
+        if path.is_relative() && crate::norm::is_normalized(path.as_ref()) {
+            Ok(Self::ref_cast(path))
+        } else {
+            Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "path must be relative and normalized",
+            ))
+        }
+    }
+}
+
+impl<'a> TryFrom<&'a Path> for &'a RelNormPath {
+    type Error = io::Error;
+
+    fn try_from(path: &'a Path) -> Result<Self, Self::Error> {
+        RelNormPath::new(path)
+    }
+}
+
+impl RelNormPathBuf {
+    pub fn into_path_buf(self) -> PathBuf {
+        self.0
+    }
+}
+
+impl From<RelNormPathBuf> for PathBuf {
+    fn from(path: RelNormPathBuf) -> Self {
+        path.0
+    }
+}
+
+impl TryFrom<PathBuf> for RelNormPathBuf {
+    type Error = PathBuf;
+
+    fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
+        if RelNormPath::new(&path).is_ok() {
+            Ok(Self(path))
+        } else {
+            Err(path)
+        }
     }
 }

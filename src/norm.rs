@@ -6,7 +6,8 @@ use std::ops::Deref;
 use std::path::Component;
 use std::path::MAIN_SEPARATOR_STR;
 
-use ref_cast::RefCast;
+use ref_cast::RefCastCustom;
+use ref_cast::ref_cast_custom;
 
 use crate::Path;
 use crate::PathBuf;
@@ -128,12 +129,12 @@ use crate::PathBuf;
 ///     );
 /// }
 /// ```
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
 #[repr(transparent)]
 pub struct NormPathBuf(PathBuf);
 
 /// Equivalent to [Path], but guaranteed to be normalized.
-#[derive(RefCast, PartialEq, Eq)]
+#[derive(RefCastCustom, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct NormPath(Path);
 
@@ -400,4 +401,104 @@ mod serde_tests {
             })],
         );
     }
+}
+
+impl NormPath {
+    #[ref_cast_custom]
+    pub(crate) fn ref_cast(path: &Path) -> &Self;
+
+    /// ```
+    /// use dirge::NormPath;
+    /// use dirge::NormPathBuf;
+    /// let owned = NormPathBuf::new("a").unwrap();
+    /// assert_eq!(NormPath::new(owned.as_path()).unwrap(), &*owned);
+    /// ```
+    ///
+    /// ```compile_fail
+    /// use dirge::{NormPath, Path};
+    /// use ref_cast::RefCast;
+    /// let _ = NormPath::ref_cast(Path::new("a/.."));
+    /// ```
+    pub fn new<P: AsRef<Path> + ?Sized>(path: &P) -> io::Result<&Self> {
+        let path = path.as_ref();
+        if crate::norm::is_normalized(path.as_ref()) {
+            Ok(Self::ref_cast(path))
+        } else {
+            Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "path must be normalized",
+            ))
+        }
+    }
+}
+
+impl<'a> TryFrom<&'a Path> for &'a NormPath {
+    type Error = io::Error;
+
+    fn try_from(path: &'a Path) -> Result<Self, Self::Error> {
+        NormPath::new(path)
+    }
+}
+
+impl NormPathBuf {
+    pub fn into_path_buf(self) -> PathBuf {
+        self.0
+    }
+}
+
+impl From<NormPathBuf> for PathBuf {
+    fn from(path: NormPathBuf) -> Self {
+        path.0
+    }
+}
+
+impl TryFrom<PathBuf> for NormPathBuf {
+    type Error = PathBuf;
+
+    fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
+        if NormPath::new(&path).is_ok() {
+            Ok(Self(path))
+        } else {
+            Err(path)
+        }
+    }
+}
+
+impl From<crate::AbsNormPathBuf> for NormPathBuf {
+    fn from(path: crate::AbsNormPathBuf) -> Self {
+        Self(path.into_path_buf())
+    }
+}
+
+impl From<crate::RelNormPathBuf> for NormPathBuf {
+    fn from(path: crate::RelNormPathBuf) -> Self {
+        Self(path.into_path_buf())
+    }
+}
+
+pub(crate) fn is_normalized(path: &std::path::Path) -> bool {
+    let mut remaining = path.as_os_str().as_encoded_bytes();
+    let mut needs_separator = false;
+    let mut normal_seen = false;
+    for component in path.components() {
+        let text = match component {
+            Component::CurDir => return path.as_os_str() == ".",
+            Component::ParentDir if path.has_root() || normal_seen => return false,
+            Component::RootDir => MAIN_SEPARATOR_STR.as_bytes(),
+            _ => component.as_os_str().as_encoded_bytes(),
+        };
+        if needs_separator {
+            let Some(rest) = remaining.strip_prefix(MAIN_SEPARATOR_STR.as_bytes()) else {
+                return false;
+            };
+            remaining = rest;
+        }
+        let Some(rest) = remaining.strip_prefix(text) else {
+            return false;
+        };
+        remaining = rest;
+        normal_seen |= matches!(component, Component::Normal(_));
+        needs_separator = matches!(component, Component::Normal(_) | Component::ParentDir);
+    }
+    remaining.is_empty()
 }
