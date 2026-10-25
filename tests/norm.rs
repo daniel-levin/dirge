@@ -1,19 +1,19 @@
 use dirge::NormPath;
 use dirge::NormPathBuf;
-use dirge::Path;
+use dirge::Utf8Path;
 
 #[test]
 fn basic() {
     let norm = NormPathBuf::new("path/to/file.txt").unwrap();
     let _: &NormPath = &norm;
-    let _: &Path = &norm;
+    let _: &Utf8Path = &norm;
 }
 
 #[test]
 fn deref_to_norm_path() {
     let norm = NormPathBuf::new("path/to/file.txt").unwrap();
     let norm_path: &NormPath = &norm;
-    assert_eq!(&**norm_path, Path::new("path/to/file.txt"));
+    assert_eq!(&**norm_path, Utf8Path::new("path/to/file.txt"));
 }
 
 #[test]
@@ -36,49 +36,49 @@ fn no_overhead() {
 #[test]
 fn normalizes_current_dir() {
     let norm = NormPathBuf::new("path/./to/file.txt").unwrap();
-    assert_eq!(norm.as_path(), Path::new("path/to/file.txt"));
+    assert_eq!(norm.as_path(), Utf8Path::new("path/to/file.txt"));
 }
 
 #[test]
 fn normalizes_parent_dir() {
     let norm = NormPathBuf::new("path/to/../file.txt").unwrap();
-    assert_eq!(norm.as_path(), Path::new("path/file.txt"));
+    assert_eq!(norm.as_path(), Utf8Path::new("path/file.txt"));
 }
 
 #[test]
 fn normalizes_complex_path() {
     let norm = NormPathBuf::new("path/./to/../other/./file.txt").unwrap();
-    assert_eq!(norm.as_path(), Path::new("path/other/file.txt"));
+    assert_eq!(norm.as_path(), Utf8Path::new("path/other/file.txt"));
 }
 
 #[test]
 fn handles_multiple_parent_dirs() {
     let norm = NormPathBuf::new("path/to/deep/../../file.txt").unwrap();
-    assert_eq!(norm.as_path(), Path::new("path/file.txt"));
+    assert_eq!(norm.as_path(), Utf8Path::new("path/file.txt"));
 }
 
 #[test]
 fn preserves_leading_parent_dirs() {
     let norm = NormPathBuf::new("../path/to/file.txt").unwrap();
-    assert_eq!(norm.as_path(), Path::new("../path/to/file.txt"));
+    assert_eq!(norm.as_path(), Utf8Path::new("../path/to/file.txt"));
 }
 
 #[test]
 fn handles_empty_becoming_current() {
     let norm = NormPathBuf::new("./").unwrap();
-    assert_eq!(norm.as_path(), Path::new("."));
+    assert_eq!(norm.as_path(), Utf8Path::new("."));
 }
 
 #[test]
 fn handles_current_dir_only() {
     let norm = NormPathBuf::new(".").unwrap();
-    assert_eq!(norm.as_path(), Path::new("."));
+    assert_eq!(norm.as_path(), Utf8Path::new("."));
 }
 
 #[test]
 fn preserves_absolute_paths() {
     let norm = NormPathBuf::new("/path/./to/../file.txt").unwrap();
-    assert_eq!(norm.as_path(), Path::new("/path/file.txt"));
+    assert_eq!(norm.as_path(), Utf8Path::new("/path/file.txt"));
 }
 
 #[test]
@@ -95,7 +95,7 @@ fn preserves_unresolved_parents_and_stops_at_roots() {
         ("a//b/./c/../", "a/b"),
     ] {
         let norm = NormPathBuf::new(input).unwrap();
-        assert_eq!(norm.as_path(), Path::new(expected), "{input:?}");
+        assert_eq!(norm.as_path(), Utf8Path::new(expected), "{input:?}");
         let again = NormPathBuf::new(&norm).unwrap();
         assert_eq!(again.as_os_str(), norm.as_os_str(), "{input:?}");
     }

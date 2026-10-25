@@ -6,18 +6,18 @@ use std::ops::Deref;
 use ref_cast::RefCastCustom;
 use ref_cast::ref_cast_custom;
 
-use crate::Path;
-use crate::PathBuf;
+use crate::Utf8Path;
+use crate::Utf8PathBuf;
 
-/// Equivalent to [PathBuf], but guaranteed to be absolute.
+/// Equivalent to [Utf8PathBuf], but guaranteed to be absolute.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
 #[repr(transparent)]
-pub struct AbsPathBuf(PathBuf);
+pub struct AbsPathBuf(Utf8PathBuf);
 
-/// Equivalent to [Path], but guaranteed to be absolute.
+/// Equivalent to [Utf8Path], but guaranteed to be absolute.
 #[derive(RefCastCustom, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
-pub struct AbsPath(Path);
+pub struct AbsPath(Utf8Path);
 
 impl fmt::Debug for AbsPath {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -32,19 +32,19 @@ impl fmt::Debug for AbsPathBuf {
 }
 
 impl AbsPathBuf {
-    pub fn new<P: AsRef<Path>>(p: P) -> io::Result<Self> {
+    pub fn new<P: AsRef<Utf8Path>>(p: P) -> io::Result<Self> {
         p.as_ref().to_abs_path_buf()
     }
 }
 
-impl AsRef<Path> for AbsPathBuf {
-    fn as_ref(&self) -> &Path {
+impl AsRef<Utf8Path> for AbsPathBuf {
+    fn as_ref(&self) -> &Utf8Path {
         &self.0
     }
 }
 
-impl AsRef<Path> for AbsPath {
-    fn as_ref(&self) -> &Path {
+impl AsRef<Utf8Path> for AbsPath {
+    fn as_ref(&self) -> &Utf8Path {
         &self.0
     }
 }
@@ -61,11 +61,11 @@ impl AsRef<std::path::Path> for AbsPath {
     }
 }
 
-pub trait ToAbsPathBuf: AsRef<Path> {
+pub trait ToAbsPathBuf: AsRef<Utf8Path> {
     fn to_abs_path_buf(&self) -> io::Result<AbsPathBuf>;
 }
 
-impl<P: AsRef<Path>> ToAbsPathBuf for P {
+impl<P: AsRef<Utf8Path>> ToAbsPathBuf for P {
     fn to_abs_path_buf(&self) -> io::Result<AbsPathBuf> {
         Ok(AbsPathBuf(crate::from_std_path_buf(std::path::absolute(
             self.as_ref(),
@@ -74,7 +74,7 @@ impl<P: AsRef<Path>> ToAbsPathBuf for P {
 }
 
 impl Deref for AbsPath {
-    type Target = Path;
+    type Target = Utf8Path;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -120,7 +120,7 @@ impl AbsPathBuf {
 }
 
 impl AbsPathBuf {
-    pub fn as_path(&self) -> &Path {
+    pub fn as_path(&self) -> &Utf8Path {
         self
     }
 
@@ -128,12 +128,12 @@ impl AbsPathBuf {
         self.0.capacity()
     }
 
-    pub fn push<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
+    pub fn push<P: AsRef<Utf8Path>>(&mut self, path: P) -> io::Result<()> {
         *self = self.join(path)?;
         Ok(())
     }
 
-    pub fn join<P: AsRef<Path>>(&self, path: P) -> io::Result<AbsPathBuf> {
+    pub fn join<P: AsRef<Utf8Path>>(&self, path: P) -> io::Result<AbsPathBuf> {
         let joined = self.0.join(path);
         if joined.is_absolute() {
             Ok(Self(joined))
@@ -159,7 +159,7 @@ impl<'de> serde::Deserialize<'de> for AbsPathBuf {
     where
         D: serde::Deserializer<'de>,
     {
-        let path_buf = PathBuf::deserialize(deserializer)?;
+        let path_buf = Utf8PathBuf::deserialize(deserializer)?;
         if path_buf.is_absolute() {
             Ok(AbsPathBuf(path_buf))
         } else {
@@ -224,7 +224,7 @@ mod serde_tests {
 
 impl AbsPath {
     #[ref_cast_custom]
-    pub(crate) fn ref_cast(path: &Path) -> &Self;
+    pub(crate) fn ref_cast(path: &Utf8Path) -> &Self;
 
     /// ```
     /// use dirge::AbsPath;
@@ -234,11 +234,11 @@ impl AbsPath {
     /// ```
     ///
     /// ```compile_fail
-    /// use dirge::{AbsPath, Path};
+    /// use dirge::{AbsPath, Utf8Path};
     /// use ref_cast::RefCast;
-    /// let _ = AbsPath::ref_cast(Path::new("a/.."));
+    /// let _ = AbsPath::ref_cast(Utf8Path::new("a/.."));
     /// ```
-    pub fn new<P: AsRef<Path> + ?Sized>(path: &P) -> io::Result<&Self> {
+    pub fn new<P: AsRef<Utf8Path> + ?Sized>(path: &P) -> io::Result<&Self> {
         let path = path.as_ref();
         if path.is_absolute() {
             Ok(Self::ref_cast(path))
@@ -251,30 +251,30 @@ impl AbsPath {
     }
 }
 
-impl<'a> TryFrom<&'a Path> for &'a AbsPath {
+impl<'a> TryFrom<&'a Utf8Path> for &'a AbsPath {
     type Error = io::Error;
 
-    fn try_from(path: &'a Path) -> Result<Self, Self::Error> {
+    fn try_from(path: &'a Utf8Path) -> Result<Self, Self::Error> {
         AbsPath::new(path)
     }
 }
 
 impl AbsPathBuf {
-    pub fn into_path_buf(self) -> PathBuf {
+    pub fn into_path_buf(self) -> Utf8PathBuf {
         self.0
     }
 }
 
-impl From<AbsPathBuf> for PathBuf {
+impl From<AbsPathBuf> for Utf8PathBuf {
     fn from(path: AbsPathBuf) -> Self {
         path.0
     }
 }
 
-impl TryFrom<PathBuf> for AbsPathBuf {
-    type Error = PathBuf;
+impl TryFrom<Utf8PathBuf> for AbsPathBuf {
+    type Error = Utf8PathBuf;
 
-    fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
+    fn try_from(path: Utf8PathBuf) -> Result<Self, Self::Error> {
         if AbsPath::new(&path).is_ok() {
             Ok(Self(path))
         } else {

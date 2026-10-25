@@ -6,41 +6,44 @@ use std::ops::Deref;
 use ref_cast::RefCastCustom;
 use ref_cast::ref_cast_custom;
 
-use crate::Path;
-use crate::PathBuf;
+use crate::Utf8Path;
+use crate::Utf8PathBuf;
 
 /// ```
-/// use dirge::Path;
 /// use dirge::RelNormPathBuf;
+/// use dirge::Utf8Path;
 ///
 /// assert_eq!(
 ///     RelNormPathBuf::new("a/./b/../c").unwrap().as_path(),
-///     Path::new("a/c")
+///     Utf8Path::new("a/c")
 /// );
 /// assert_eq!(
 ///     RelNormPathBuf::new("a/../../b").unwrap().as_path(),
-///     Path::new("../b")
+///     Utf8Path::new("../b")
 /// );
 /// assert_eq!(
 ///     RelNormPathBuf::new("../..").unwrap().as_path(),
-///     Path::new("../..")
+///     Utf8Path::new("../..")
 /// );
 /// assert_eq!(
 ///     RelNormPathBuf::new("a/..").unwrap().as_path(),
-///     Path::new(".")
+///     Utf8Path::new(".")
 /// );
-/// assert_eq!(RelNormPathBuf::new("").unwrap().as_path(), Path::new(""));
+/// assert_eq!(
+///     RelNormPathBuf::new("").unwrap().as_path(),
+///     Utf8Path::new("")
+/// );
 /// let absolute = if cfg!(windows) { r"C:\a" } else { "/a" };
 /// assert_eq!(RelNormPathBuf::new(absolute).is_err(), true);
 /// ```
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
 #[repr(transparent)]
-pub struct RelNormPathBuf(PathBuf);
+pub struct RelNormPathBuf(Utf8PathBuf);
 
-/// Equivalent to [Path], but guaranteed to be relative and normalized.
+/// Equivalent to [Utf8Path], but guaranteed to be relative and normalized.
 #[derive(RefCastCustom, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
-pub struct RelNormPath(Path);
+pub struct RelNormPath(Utf8Path);
 
 impl fmt::Debug for RelNormPath {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -55,19 +58,19 @@ impl fmt::Debug for RelNormPathBuf {
 }
 
 impl RelNormPathBuf {
-    pub fn new<P: AsRef<Path>>(p: P) -> io::Result<Self> {
+    pub fn new<P: AsRef<Utf8Path>>(p: P) -> io::Result<Self> {
         p.as_ref().to_rel_norm_path_buf()
     }
 }
 
-impl AsRef<Path> for RelNormPathBuf {
-    fn as_ref(&self) -> &Path {
+impl AsRef<Utf8Path> for RelNormPathBuf {
+    fn as_ref(&self) -> &Utf8Path {
         &self.0
     }
 }
 
-impl AsRef<Path> for RelNormPath {
-    fn as_ref(&self) -> &Path {
+impl AsRef<Utf8Path> for RelNormPath {
+    fn as_ref(&self) -> &Utf8Path {
         &self.0
     }
 }
@@ -84,11 +87,11 @@ impl AsRef<std::path::Path> for RelNormPath {
     }
 }
 
-pub trait ToRelNormPathBuf: AsRef<Path> {
+pub trait ToRelNormPathBuf: AsRef<Utf8Path> {
     fn to_rel_norm_path_buf(&self) -> io::Result<RelNormPathBuf>;
 }
 
-impl<P: AsRef<Path>> ToRelNormPathBuf for P {
+impl<P: AsRef<Utf8Path>> ToRelNormPathBuf for P {
     fn to_rel_norm_path_buf(&self) -> io::Result<RelNormPathBuf> {
         let path = self.as_ref();
         if path.is_absolute() {
@@ -109,7 +112,7 @@ impl<P: AsRef<Path>> ToRelNormPathBuf for P {
 }
 
 impl Deref for RelNormPath {
-    type Target = Path;
+    type Target = Utf8Path;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -163,7 +166,7 @@ impl RelNormPathBuf {
 }
 
 impl RelNormPathBuf {
-    pub fn as_path(&self) -> &Path {
+    pub fn as_path(&self) -> &Utf8Path {
         self
     }
 
@@ -171,12 +174,12 @@ impl RelNormPathBuf {
         self.0.capacity()
     }
 
-    pub fn push<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
+    pub fn push<P: AsRef<Utf8Path>>(&mut self, path: P) -> io::Result<()> {
         *self = self.join(path)?;
         Ok(())
     }
 
-    pub fn join<P: AsRef<Path>>(&self, path: P) -> io::Result<RelNormPathBuf> {
+    pub fn join<P: AsRef<Utf8Path>>(&self, path: P) -> io::Result<RelNormPathBuf> {
         Self::new(self.0.join(path))
     }
 }
@@ -197,7 +200,7 @@ impl<'de> serde::Deserialize<'de> for RelNormPathBuf {
     where
         D: serde::Deserializer<'de>,
     {
-        let path_buf = PathBuf::deserialize(deserializer)?;
+        let path_buf = Utf8PathBuf::deserialize(deserializer)?;
         Self::new(path_buf).map_err(serde::de::Error::custom)
     }
 }
@@ -214,7 +217,7 @@ impl serde::Serialize for RelNormPath {
 
 impl RelNormPath {
     #[ref_cast_custom]
-    pub(crate) fn ref_cast(path: &Path) -> &Self;
+    pub(crate) fn ref_cast(path: &Utf8Path) -> &Self;
 
     /// ```
     /// use dirge::RelNormPath;
@@ -224,11 +227,11 @@ impl RelNormPath {
     /// ```
     ///
     /// ```compile_fail
-    /// use dirge::{RelNormPath, Path};
+    /// use dirge::{RelNormPath, Utf8Path};
     /// use ref_cast::RefCast;
-    /// let _ = RelNormPath::ref_cast(Path::new("a/.."));
+    /// let _ = RelNormPath::ref_cast(Utf8Path::new("a/.."));
     /// ```
-    pub fn new<P: AsRef<Path> + ?Sized>(path: &P) -> io::Result<&Self> {
+    pub fn new<P: AsRef<Utf8Path> + ?Sized>(path: &P) -> io::Result<&Self> {
         let path = path.as_ref();
         if path.is_relative() && crate::norm::is_normalized(path.as_ref()) {
             Ok(Self::ref_cast(path))
@@ -241,30 +244,30 @@ impl RelNormPath {
     }
 }
 
-impl<'a> TryFrom<&'a Path> for &'a RelNormPath {
+impl<'a> TryFrom<&'a Utf8Path> for &'a RelNormPath {
     type Error = io::Error;
 
-    fn try_from(path: &'a Path) -> Result<Self, Self::Error> {
+    fn try_from(path: &'a Utf8Path) -> Result<Self, Self::Error> {
         RelNormPath::new(path)
     }
 }
 
 impl RelNormPathBuf {
-    pub fn into_path_buf(self) -> PathBuf {
+    pub fn into_path_buf(self) -> Utf8PathBuf {
         self.0
     }
 }
 
-impl From<RelNormPathBuf> for PathBuf {
+impl From<RelNormPathBuf> for Utf8PathBuf {
     fn from(path: RelNormPathBuf) -> Self {
         path.0
     }
 }
 
-impl TryFrom<PathBuf> for RelNormPathBuf {
-    type Error = PathBuf;
+impl TryFrom<Utf8PathBuf> for RelNormPathBuf {
+    type Error = Utf8PathBuf;
 
-    fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
+    fn try_from(path: Utf8PathBuf) -> Result<Self, Self::Error> {
         if RelNormPath::new(&path).is_ok() {
             Ok(Self(path))
         } else {

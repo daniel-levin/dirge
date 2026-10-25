@@ -1,12 +1,12 @@
-use dirge::Path;
 use dirge::RelPath;
 use dirge::RelPathBuf;
+use dirge::Utf8Path;
 
 #[test]
 fn basic() {
     let rel = RelPathBuf::new("src/main.rs").unwrap();
     let _: &RelPath = &rel;
-    let _: &Path = &rel;
+    let _: &Utf8Path = &rel;
 }
 
 #[test]

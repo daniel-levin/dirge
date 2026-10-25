@@ -1,7 +1,7 @@
-use dirge::Path;
 use dirge::RelNormPath;
 use dirge::RelNormPathBuf;
 use dirge::ToRelNormPathBuf;
+use dirge::Utf8Path;
 
 fn absolute() -> &'static str {
     if cfg!(windows) { r"C:\a" } else { "/a" }
@@ -18,7 +18,7 @@ fn normalization_and_borrowed_views() {
         ("../..", "../.."),
     ] {
         let norm = input.to_rel_norm_path_buf().unwrap();
-        assert_eq!(norm.as_path(), Path::new(expected));
+        assert_eq!(norm.as_path(), Utf8Path::new(expected));
         let borrowed: &RelNormPath = &norm;
         assert!(borrowed.is_relative());
         assert_eq!(borrowed.as_rel_path().as_os_str(), norm.as_os_str());
@@ -44,14 +44,14 @@ fn rejects_absolute_inputs_without_mutating() {
     let joined = path.join("../../c/./d").unwrap();
     path.push("../../c/./d").unwrap();
     assert_eq!(path, joined);
-    assert_eq!(path.as_path(), Path::new("c/d"));
+    assert_eq!(path.as_path(), Utf8Path::new("c/d"));
 }
 
 #[test]
 fn no_overhead() {
     assert_eq!(
         std::mem::size_of::<RelNormPathBuf>(),
-        std::mem::size_of::<dirge::PathBuf>()
+        std::mem::size_of::<dirge::Utf8PathBuf>()
     );
 }
 

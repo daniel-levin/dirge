@@ -24,7 +24,7 @@ macro_rules! check_type {
             let borrowed: &$borrowed = &owned;
             assert!(hash_set.contains(borrowed));
             assert!(tree_set.contains(borrowed));
-            let raw: PathBuf = owned.into();
+            let raw: Utf8PathBuf = owned.into();
             assert_eq!(raw.as_os_str().as_encoded_bytes().as_ptr(), pointer);
             assert_eq!(raw.capacity(), capacity);
         }
@@ -46,7 +46,7 @@ fn validation_rejects_without_transforming_or_consuming() {
     for text in ["a/..", "a/./b", "a//b", "./", "a/"] {
         assert!(NormPath::new(text).is_err(), "{text:?}");
         assert!(RelNormPath::new(text).is_err(), "{text:?}");
-        let raw = PathBuf::from(text);
+        let raw = Utf8PathBuf::from(text);
         let pointer = raw.as_os_str().as_encoded_bytes().as_ptr();
         let rejected = NormPathBuf::try_from(raw).unwrap_err();
         assert_eq!(rejected.as_os_str().as_encoded_bytes().as_ptr(), pointer);
@@ -84,7 +84,7 @@ fn borrowed_validation_matches_normalizer() {
                 for separator in ["/", "//", std::path::MAIN_SEPARATOR_STR] {
                     let text = format!("{first}{separator}{second}{separator}{third}");
                     let normalized = NormPathBuf::new(&text).unwrap();
-                    let unchanged = normalized.as_os_str() == Path::new(&text).as_os_str();
+                    let unchanged = normalized.as_os_str() == Utf8Path::new(&text).as_os_str();
                     assert_eq!(NormPath::new(&text).is_ok(), unchanged, "{text:?}");
                     assert!(NormPath::new(normalized.as_path()).is_ok(), "{text:?}");
                 }

@@ -12,8 +12,8 @@
 
 #![deny(unsafe_code)]
 
-pub use camino::Utf8Path as Path;
-pub use camino::Utf8PathBuf as PathBuf;
+pub use camino::Utf8Path;
+pub use camino::Utf8PathBuf;
 
 mod abs;
 mod abs_norm;
@@ -37,8 +37,8 @@ pub use rel_norm::RelNormPath;
 pub use rel_norm::RelNormPathBuf;
 pub use rel_norm::ToRelNormPathBuf;
 
-fn from_std_path_buf(path: std::path::PathBuf) -> std::io::Result<PathBuf> {
-    PathBuf::from_path_buf(path).map_err(|_| {
+fn from_std_path_buf(path: std::path::PathBuf) -> std::io::Result<Utf8PathBuf> {
+    Utf8PathBuf::from_path_buf(path).map_err(|_| {
         std::io::Error::new(std::io::ErrorKind::InvalidData, "path is not valid UTF-8")
     })
 }

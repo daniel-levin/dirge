@@ -6,18 +6,18 @@ use std::ops::Deref;
 use ref_cast::RefCastCustom;
 use ref_cast::ref_cast_custom;
 
-use crate::Path;
-use crate::PathBuf;
+use crate::Utf8Path;
+use crate::Utf8PathBuf;
 
-/// Equivalent to [PathBuf], but guaranteed to be relative.
+/// Equivalent to [Utf8PathBuf], but guaranteed to be relative.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
 #[repr(transparent)]
-pub struct RelPathBuf(PathBuf);
+pub struct RelPathBuf(Utf8PathBuf);
 
-/// Equivalent to [Path], but guaranteed to be relative.
+/// Equivalent to [Utf8Path], but guaranteed to be relative.
 #[derive(RefCastCustom, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
-pub struct RelPath(Path);
+pub struct RelPath(Utf8Path);
 
 impl fmt::Debug for RelPath {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -32,19 +32,19 @@ impl fmt::Debug for RelPathBuf {
 }
 
 impl RelPathBuf {
-    pub fn new<P: AsRef<Path>>(p: P) -> io::Result<Self> {
+    pub fn new<P: AsRef<Utf8Path>>(p: P) -> io::Result<Self> {
         p.as_ref().to_rel_path_buf()
     }
 }
 
-impl AsRef<Path> for RelPathBuf {
-    fn as_ref(&self) -> &Path {
+impl AsRef<Utf8Path> for RelPathBuf {
+    fn as_ref(&self) -> &Utf8Path {
         &self.0
     }
 }
 
-impl AsRef<Path> for RelPath {
-    fn as_ref(&self) -> &Path {
+impl AsRef<Utf8Path> for RelPath {
+    fn as_ref(&self) -> &Utf8Path {
         &self.0
     }
 }
@@ -61,11 +61,11 @@ impl AsRef<std::path::Path> for RelPath {
     }
 }
 
-pub trait ToRelPathBuf: AsRef<Path> {
+pub trait ToRelPathBuf: AsRef<Utf8Path> {
     fn to_rel_path_buf(&self) -> io::Result<RelPathBuf>;
 }
 
-impl<P: AsRef<Path>> ToRelPathBuf for P {
+impl<P: AsRef<Utf8Path>> ToRelPathBuf for P {
     fn to_rel_path_buf(&self) -> io::Result<RelPathBuf> {
         let path = self.as_ref();
         if path.is_relative() {
@@ -80,7 +80,7 @@ impl<P: AsRef<Path>> ToRelPathBuf for P {
 }
 
 impl Deref for RelPath {
-    type Target = Path;
+    type Target = Utf8Path;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -126,7 +126,7 @@ impl RelPathBuf {
 }
 
 impl RelPathBuf {
-    pub fn as_path(&self) -> &Path {
+    pub fn as_path(&self) -> &Utf8Path {
         self
     }
 
@@ -151,7 +151,7 @@ impl<'de> serde::Deserialize<'de> for RelPathBuf {
     where
         D: serde::Deserializer<'de>,
     {
-        let path_buf = PathBuf::deserialize(deserializer)?;
+        let path_buf = Utf8PathBuf::deserialize(deserializer)?;
         if path_buf.is_relative() {
             Ok(RelPathBuf(path_buf))
         } else {
@@ -214,7 +214,7 @@ mod serde_tests {
 
 impl RelPath {
     #[ref_cast_custom]
-    pub(crate) fn ref_cast(path: &Path) -> &Self;
+    pub(crate) fn ref_cast(path: &Utf8Path) -> &Self;
 
     /// ```
     /// use dirge::RelPath;
@@ -224,11 +224,11 @@ impl RelPath {
     /// ```
     ///
     /// ```compile_fail
-    /// use dirge::{RelPath, Path};
+    /// use dirge::{RelPath, Utf8Path};
     /// use ref_cast::RefCast;
-    /// let _ = RelPath::ref_cast(Path::new("a/.."));
+    /// let _ = RelPath::ref_cast(Utf8Path::new("a/.."));
     /// ```
-    pub fn new<P: AsRef<Path> + ?Sized>(path: &P) -> io::Result<&Self> {
+    pub fn new<P: AsRef<Utf8Path> + ?Sized>(path: &P) -> io::Result<&Self> {
         let path = path.as_ref();
         if path.is_relative() {
             Ok(Self::ref_cast(path))
@@ -241,30 +241,30 @@ impl RelPath {
     }
 }
 
-impl<'a> TryFrom<&'a Path> for &'a RelPath {
+impl<'a> TryFrom<&'a Utf8Path> for &'a RelPath {
     type Error = io::Error;
 
-    fn try_from(path: &'a Path) -> Result<Self, Self::Error> {
+    fn try_from(path: &'a Utf8Path) -> Result<Self, Self::Error> {
         RelPath::new(path)
     }
 }
 
 impl RelPathBuf {
-    pub fn into_path_buf(self) -> PathBuf {
+    pub fn into_path_buf(self) -> Utf8PathBuf {
         self.0
     }
 }
 
-impl From<RelPathBuf> for PathBuf {
+impl From<RelPathBuf> for Utf8PathBuf {
     fn from(path: RelPathBuf) -> Self {
         path.0
     }
 }
 
-impl TryFrom<PathBuf> for RelPathBuf {
-    type Error = PathBuf;
+impl TryFrom<Utf8PathBuf> for RelPathBuf {
+    type Error = Utf8PathBuf;
 
-    fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
+    fn try_from(path: Utf8PathBuf) -> Result<Self, Self::Error> {
         if RelPath::new(&path).is_ok() {
             Ok(Self(path))
         } else {
