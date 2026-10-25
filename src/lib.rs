@@ -104,16 +104,16 @@
 #![deny(unsafe_code)]
 
 #[cfg(feature = "camino")]
-pub(crate) type Path = camino::Utf8Path;
+pub type Path = camino::Utf8Path;
 
 #[cfg(not(feature = "camino"))]
-pub(crate) type Path = std::path::Path;
+pub type Path = std::path::Path;
 
 #[cfg(feature = "camino")]
-pub(crate) type PathBuf = camino::Utf8PathBuf;
+pub type PathBuf = camino::Utf8PathBuf;
 
 #[cfg(not(feature = "camino"))]
-pub(crate) type PathBuf = std::path::PathBuf;
+pub type PathBuf = std::path::PathBuf;
 
 mod abs;
 mod norm;

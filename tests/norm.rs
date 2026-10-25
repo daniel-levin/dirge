@@ -1,10 +1,6 @@
-#[cfg(not(feature = "camino"))]
-use std::path::Path;
-
-#[cfg(feature = "camino")]
-use camino::Utf8Path as Path;
 use dirge::NormPath;
 use dirge::NormPathBuf;
+use dirge::Path;
 
 #[test]
 fn basic() {
