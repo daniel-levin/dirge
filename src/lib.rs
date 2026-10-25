@@ -28,6 +28,7 @@ mod abs;
 mod abs_norm;
 mod norm;
 mod rel;
+mod rel_norm;
 
 pub use abs::AbsPath;
 pub use abs::AbsPathBuf;
@@ -41,6 +42,9 @@ pub use norm::ToNormPathBuf;
 pub use rel::RelPath;
 pub use rel::RelPathBuf;
 pub use rel::ToRelPathBuf;
+pub use rel_norm::RelNormPath;
+pub use rel_norm::RelNormPathBuf;
+pub use rel_norm::ToRelNormPathBuf;
 
 fn from_std_path_buf(path: std::path::PathBuf) -> std::io::Result<PathBuf> {
     #[cfg(feature = "camino")]

@@ -1,6 +1,7 @@
 use dirge::AbsNormPathBuf;
 use dirge::AbsPathBuf;
 use dirge::NormPathBuf;
+use dirge::RelNormPathBuf;
 use dirge::RelPathBuf;
 
 macro_rules! check_strings {
@@ -34,6 +35,7 @@ macro_rules! check_strings {
 check_strings!(absolute_strings, AbsPathBuf);
 check_strings!(absolute_normalized_strings, AbsNormPathBuf);
 check_strings!(relative_strings, RelPathBuf);
+check_strings!(relative_normalized_strings, RelNormPathBuf);
 check_strings!(normalized_strings, NormPathBuf);
 
 #[cfg(all(unix, not(feature = "camino")))]
@@ -57,5 +59,6 @@ fn invalid_utf8_is_recoverable() {
     check_invalid!(AbsPathBuf);
     check_invalid!(AbsNormPathBuf);
     check_invalid!(RelPathBuf);
+    check_invalid!(RelNormPathBuf);
     check_invalid!(NormPathBuf);
 }
