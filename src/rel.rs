@@ -110,6 +110,53 @@ impl ToOwned for RelPath {
     }
 }
 
+impl RelPath {
+    /// Borrows the path as UTF-8. With `camino`, this always returns `&str`;
+    /// otherwise it returns `None` when the path is not valid UTF-8.
+    #[cfg(feature = "camino")]
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+
+    /// Borrows the path as UTF-8. With `camino`, this always returns `&str`;
+    /// otherwise it returns `None` when the path is not valid UTF-8.
+    #[cfg(not(feature = "camino"))]
+    pub fn as_str(&self) -> Option<&str> {
+        self.0.to_str()
+    }
+
+    /// Equivalent to [`Self::as_str`], including its feature-dependent return type.
+    #[cfg(feature = "camino")]
+    pub fn to_str(&self) -> &str {
+        self.as_str()
+    }
+
+    /// Equivalent to [`Self::as_str`], including its feature-dependent return type.
+    #[cfg(not(feature = "camino"))]
+    pub fn to_str(&self) -> Option<&str> {
+        self.as_str()
+    }
+}
+
+impl RelPathBuf {
+    /// Consumes the path into a UTF-8 string. With `camino`, this is infallible;
+    /// otherwise an invalid UTF-8 path is returned unchanged in `Err`.
+    #[cfg(feature = "camino")]
+    pub fn into_string(self) -> String {
+        self.0.into_string()
+    }
+
+    /// Consumes the path into a UTF-8 string. With `camino`, this is infallible;
+    /// otherwise an invalid UTF-8 path is returned unchanged in `Err`.
+    #[cfg(not(feature = "camino"))]
+    pub fn into_string(self) -> Result<String, Self> {
+        self.0
+            .into_os_string()
+            .into_string()
+            .map_err(|path| Self(path.into()))
+    }
+}
+
 impl RelPathBuf {
     pub fn as_path(&self) -> &Path {
         self
