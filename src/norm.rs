@@ -11,7 +11,123 @@ use ref_cast::RefCast;
 use crate::Path;
 use crate::PathBuf;
 
-/// Equivalent to [PathBuf], but guaranteed to be normalized.
+/// ```
+/// use dirge::NormPathBuf;
+/// use dirge::Path;
+///
+/// assert_eq!(NormPathBuf::new("").unwrap().as_path(), Path::new(""));
+/// assert_eq!(NormPathBuf::new(".").unwrap().as_path(), Path::new("."));
+/// assert_eq!(NormPathBuf::new("./").unwrap().as_path(), Path::new("."));
+/// assert_eq!(NormPathBuf::new("a/..").unwrap().as_path(), Path::new("."));
+/// ```
+///
+/// ```
+/// use dirge::NormPathBuf;
+/// use dirge::Path;
+///
+/// assert_eq!(NormPathBuf::new("./a").unwrap().as_path(), Path::new("a"));
+/// assert_eq!(
+///     NormPathBuf::new("a//b///").unwrap().as_path(),
+///     Path::new("a/b")
+/// );
+/// assert_eq!(
+///     NormPathBuf::new("a/./b").unwrap().as_path(),
+///     Path::new("a/b")
+/// );
+/// assert_eq!(
+///     NormPathBuf::new("a/b/../c").unwrap().as_path(),
+///     Path::new("a/c")
+/// );
+/// assert_eq!(
+///     NormPathBuf::new("a/b/../../c").unwrap().as_path(),
+///     Path::new("c")
+/// );
+/// ```
+///
+/// ```
+/// use dirge::NormPathBuf;
+/// use dirge::Path;
+///
+/// assert_eq!(NormPathBuf::new("..").unwrap().as_path(), Path::new(".."));
+/// assert_eq!(
+///     NormPathBuf::new("../..").unwrap().as_path(),
+///     Path::new("../..")
+/// );
+/// assert_eq!(
+///     NormPathBuf::new("../../a").unwrap().as_path(),
+///     Path::new("../../a")
+/// );
+/// assert_eq!(
+///     NormPathBuf::new("a/../../b").unwrap().as_path(),
+///     Path::new("../b")
+/// );
+/// assert_eq!(
+///     NormPathBuf::new("../a/../../b").unwrap().as_path(),
+///     Path::new("../../b")
+/// );
+/// ```
+///
+/// ```
+/// use dirge::NormPathBuf;
+/// use dirge::Path;
+///
+/// assert_eq!(
+///     NormPathBuf::new("/a/../b").unwrap().as_path(),
+///     Path::new("/b")
+/// );
+/// assert_eq!(
+///     NormPathBuf::new("/../../a").unwrap().as_path(),
+///     Path::new("/a")
+/// );
+/// assert_eq!(
+///     NormPathBuf::new("/a/../../..").unwrap().as_path(),
+///     Path::new("/")
+/// );
+///
+/// let normalized = NormPathBuf::new("a/./b/../c").unwrap();
+/// assert_eq!(
+///     NormPathBuf::new(&normalized).unwrap().as_os_str(),
+///     normalized.as_os_str()
+/// );
+/// ```
+///
+/// ```
+/// #[cfg(windows)]
+/// {
+///     use dirge::NormPathBuf;
+///
+///     assert_eq!(
+///         NormPathBuf::new(r"C:/a\b/../c").unwrap().as_os_str(),
+///         r"C:\a\c"
+///     );
+///     assert_eq!(
+///         NormPathBuf::new(r"C:\..\..\a").unwrap().as_os_str(),
+///         r"C:\a"
+///     );
+///     assert_eq!(
+///         NormPathBuf::new(r"C:a\..\..\b").unwrap().as_os_str(),
+///         r"C:..\b"
+///     );
+///     assert_eq!(NormPathBuf::new(r"C:a\..").unwrap().as_os_str(), "C:");
+///     assert_eq!(NormPathBuf::new(r"\a\..\..\b").unwrap().as_os_str(), r"\b");
+///     assert_eq!(
+///         NormPathBuf::new(r"\\server\share\a\..\..\b")
+///             .unwrap()
+///             .as_os_str(),
+///         r"\\server\share\b"
+///     );
+///     assert_eq!(
+///         NormPathBuf::new(r"\\?\C:\a\..\b").unwrap().as_os_str(),
+///         r"\\?\C:\b"
+///     );
+///     assert_eq!(
+///         NormPathBuf::new(r"\\?\UNC\server\share\a\..\b")
+///             .unwrap()
+///             .as_os_str(),
+///         r"\\?\UNC\server\share\b"
+///     );
+/// }
+/// ```
 #[derive(PartialEq, Eq, Clone)]
 #[repr(transparent)]
 pub struct NormPathBuf(PathBuf);
